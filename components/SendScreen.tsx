@@ -24,6 +24,7 @@ import Toast from 'react-native-simple-toast';
 import {getNumberFormatSettings} from 'react-native-localize';
 import {faBars} from '@fortawesome/free-solid-svg-icons';
 import Animated, {Easing} from 'react-native-reanimated';
+import {parseZcashURI} from '../app/uris';
 
 type ScannerProps = {
   updateToField: (address: string | null, amount: string | null, memo: string | null) => void;
@@ -259,14 +260,18 @@ const SendScreen: React.FunctionComponent<SendScreenProps> = ({
     }
 
     if (address !== null) {
-      const u = Utils.parseZcashURI(address);
-      if (u) {
-        address = u.address;
-        if (u.amount) {
-          amount = Utils.maxPrecisionTrimmed(u.amount);
-        }
-        if (u.memo) {
-          memo = u.memo;
+      // Attempt to parse as URI if it starts with zcash
+      if (address.startsWith('zcash:')) {
+        const targets = parseZcashURI(address);
+        //console.log(targets);
+
+        if (Array.isArray(targets)) {
+          address = targets[0].address || '';
+          amount = Utils.maxPrecisionTrimmed(targets[0].amount || 0);
+          memo = targets[0].memoString || '';
+        } else {
+          // Show the error message as a toast
+          Toast.show(targets);
         }
       }
       toAddr.to = address.replace(/[ \t\n\r]+/g, ''); // Remove spaces
