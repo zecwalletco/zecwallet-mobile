@@ -373,7 +373,7 @@ const SendScreen: React.FunctionComponent<SendScreenProps> = ({
     if (to.amount !== '') {
       if (
         Utils.parseLocaleFloat(to.amount) > 0 &&
-        Utils.parseLocaleFloat(to.amount) <= spendable - Utils.getDefaultFee()
+        Utils.parseLocaleFloat(to.amount) <= parseFloat((spendable - Utils.getDefaultFee()).toFixed(8))
       ) {
         return 1;
       } else {
