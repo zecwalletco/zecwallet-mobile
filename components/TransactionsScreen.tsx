@@ -2,7 +2,7 @@
 import React, {useState} from 'react';
 import {createStackNavigator} from '@react-navigation/stack';
 import {RegText, ZecAmount, UsdAmount, SecondaryButton, FadeText} from '../components/Components';
-import {View, ScrollView, Image, Modal, TouchableOpacity, SafeAreaView, RefreshControl, Clipboard} from 'react-native';
+import {View, ScrollView, Image, Modal, TouchableOpacity, SafeAreaView, RefreshControl, Clipboard,FlatList} from 'react-native';
 import Toast from 'react-native-simple-toast';
 import {TotalBalance, Transaction, Info, SyncStatus} from '../app/AppState';
 import Utils from '../app/utils';
@@ -300,31 +300,32 @@ const TransactionsScreenView: React.FunctionComponent<TransactionsScreenViewProp
       <View style={{display: 'flex', alignItems: 'center', marginTop: -25}}>
         <Image source={require('../assets/img/logobig.png')} style={{width: 50, height: 50, resizeMode: 'contain'}} />
       </View>
-      <ScrollView
+
+      <FlatList
         refreshControl={
-          <RefreshControl refreshing={false} onRefresh={doRefresh} tintColor={colors.text} title="Refreshing" />
+          <RefreshControl refreshing={false} onRefresh={doRefresh} tintColor={colors.text} title="Refreshing"/>
         }
-        style={{flexGrow: 1, marginTop: 10, width: '100%', height: '100%'}}>
-        {transactions?.flatMap((t) => {
-          let txmonth = moment(t.time * 1000).format('MMM YYYY');
+        data={transactions}
+        renderItem={({item})=>{
+        let txmonth = moment(item.time * 1000).format('MMM YYYY');
 
-          var month = '';
-          if (txmonth !== lastMonth) {
-            month = txmonth;
-            lastMonth = txmonth;
-          }
-
-          return (
+        var month = '';
+        if (txmonth !== lastMonth) {
+          month = txmonth;
+          lastMonth = txmonth;
+        }
+        return (
             <TxSummaryLine
-              key={`${t.txid}-${t.type}`}
-              tx={t}
-              month={month}
-              setTxDetail={setTxDetail}
-              setTxDetailModalShowing={setTxDetailModalShowing}
-            />
-          );
-        })}
-      </ScrollView>
+                key={`${item.txid}-${item.type}`}
+                tx={item}
+                month={month}
+                setTxDetail={setTxDetail}
+                setTxDetailModalShowing={setTxDetailModalShowing}
+              />
+          )
+        }
+      }
+      />
     </View>
   );
 };
