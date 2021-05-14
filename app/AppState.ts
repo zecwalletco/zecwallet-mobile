@@ -57,6 +57,7 @@ export interface Transaction {
   confirmations: number;
   txid: string;
   time: number;
+  zec_price: number | null;
   detailedTxns: TxDetail[];
 }
 

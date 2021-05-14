@@ -26,6 +26,17 @@ export const UsdAmount: React.FunctionComponent<UsdAmountProps> = ({price, style
   return <Text style={{color: colors.text, ...style}}>$ {Utils.toLocaleFloat(usdString)}</Text>;
 };
 
+type ZecPriceProps = {
+  price?: number | null;
+};
+export const ZecPrice: React.FunctionComponent<ZecPriceProps> = ({price}) => {
+  var priceString = '';
+  if (price && price > 0) {
+    priceString = `$ ${price.toFixed(2)} per ZEC`;
+  }
+  return <FadeText>{priceString}</FadeText>;
+};
+
 type ZecAmountProps = {
   color?: string;
   size?: number;

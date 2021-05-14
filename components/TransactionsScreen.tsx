@@ -1,7 +1,7 @@
 /* eslint-disable react-native/no-inline-styles */
 import React, {useState} from 'react';
 import {createStackNavigator} from '@react-navigation/stack';
-import {RegText, ZecAmount, UsdAmount, SecondaryButton, FadeText} from '../components/Components';
+import {RegText, ZecAmount, UsdAmount, SecondaryButton, FadeText, ZecPrice} from '../components/Components';
 import {View, ScrollView, Image, Modal, TouchableOpacity, SafeAreaView, RefreshControl, Clipboard} from 'react-native';
 import Toast from 'react-native-simple-toast';
 import {TotalBalance, Transaction, Info, SyncStatus} from '../app/AppState';
@@ -14,10 +14,9 @@ import {faArrowDown, faArrowUp, faBars, faChevronLeft} from '@fortawesome/free-s
 
 type TxDetailProps = {
   tx: Transaction | null;
-  price?: number | null;
   closeModal: () => void;
 };
-const TxDetail: React.FunctionComponent<TxDetailProps> = ({tx, price, closeModal}) => {
+const TxDetail: React.FunctionComponent<TxDetailProps> = ({tx, closeModal}) => {
   const {colors} = useTheme();
   const spendColor = tx?.confirmations === 0 ? colors.primary : (tx?.amount || 0) > 0 ? '#88ee88' : '#ff6666';
 
@@ -55,7 +54,7 @@ const TxDetail: React.FunctionComponent<TxDetailProps> = ({tx, price, closeModal
             {tx?.type}
           </RegText>
           <ZecAmount size={36} amtZec={tx?.amount} />
-          <UsdAmount amtZec={tx?.amount} price={price} />
+          <UsdAmount amtZec={tx?.amount} price={tx?.zec_price} />
         </View>
 
         <View style={{margin: 10}}>
@@ -127,7 +126,10 @@ const TxDetail: React.FunctionComponent<TxDetailProps> = ({tx, price, closeModal
                   <FadeText>Amount</FadeText>
                   <View style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-between'}}>
                     <ZecAmount amtZec={txd?.amount} size={18} />
-                    <UsdAmount style={{fontSize: 18}} amtZec={txd?.amount} price={price} />
+                    <UsdAmount style={{fontSize: 18}} amtZec={txd?.amount} price={tx?.zec_price} />
+                  </View>
+                  <View style={{display: 'flex', flexDirection: 'row', justifyContent: 'flex-end'}}>
+                    <ZecPrice price={tx?.zec_price} />
                   </View>
                 </View>
 
@@ -152,7 +154,10 @@ const TxDetail: React.FunctionComponent<TxDetailProps> = ({tx, price, closeModal
           {fee && (
             <View style={{display: 'flex', marginTop: 10}}>
               <FadeText>Tx Fee</FadeText>
-              <ZecAmount amtZec={fee} size={18} />
+              <View style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-between'}}>
+                <ZecAmount amtZec={fee} size={18} />
+                <UsdAmount style={{fontSize: 18}} amtZec={fee} price={tx?.zec_price} />
+              </View>
             </View>
           )}
 
@@ -281,7 +286,7 @@ const TransactionsScreenView: React.FunctionComponent<TransactionsScreenViewProp
         transparent={false}
         visible={isTxDetailModalShowing}
         onRequestClose={() => setTxDetailModalShowing(false)}>
-        <TxDetail tx={txDetail} price={info?.zecPrice} closeModal={() => setTxDetailModalShowing(false)} />
+        <TxDetail tx={txDetail} closeModal={() => setTxDetailModalShowing(false)} />
       </Modal>
 
       <View
