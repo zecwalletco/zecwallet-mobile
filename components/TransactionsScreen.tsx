@@ -1,8 +1,26 @@
 /* eslint-disable react-native/no-inline-styles */
 import React, {useState} from 'react';
 import {createStackNavigator} from '@react-navigation/stack';
-import {RegText, ZecAmount, UsdAmount, SecondaryButton, FadeText, ZecPrice} from '../components/Components';
-import {View, ScrollView, Image, Modal, TouchableOpacity, SafeAreaView, RefreshControl, Clipboard} from 'react-native';
+import {
+  RegText,
+  ZecAmount,
+  UsdAmount,
+  SecondaryButton,
+  FadeText,
+  ZecPrice,
+  ClickableText,
+} from '../components/Components';
+import {
+  View,
+  ScrollView,
+  Image,
+  Modal,
+  TouchableOpacity,
+  SafeAreaView,
+  RefreshControl,
+  Clipboard,
+  Linking,
+} from 'react-native';
 import Toast from 'react-native-simple-toast';
 import {TotalBalance, Transaction, Info, SyncStatus} from '../app/AppState';
 import Utils from '../app/utils';
@@ -27,6 +45,21 @@ const TxDetail: React.FunctionComponent<TxDetailProps> = ({tx, closeModal}) => {
     tx?.type === 'sent' &&
     tx?.amount &&
     Math.abs(tx?.amount) - Math.abs(tx?.detailedTxns?.reduce((s, d) => s + d.amount, 0));
+
+  const handleTxIDClick = (txid?: string) => {
+    if (!txid) {
+      return;
+    }
+
+    const url = Utils.getBlockExplorerTxIDURL(txid);
+    Linking.canOpenURL(url).then(supported => {
+      if (supported) {
+        Linking.openURL(url);
+      } else {
+        console.log("Don't know how to open URI: " + url);
+      }
+    });
+  };
 
   return (
     <SafeAreaView
@@ -61,7 +94,7 @@ const TxDetail: React.FunctionComponent<TxDetailProps> = ({tx, closeModal}) => {
           <View style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-between', marginTop: 10}}>
             <View style={{display: 'flex'}}>
               <FadeText>Time</FadeText>
-              <Moment interval={0} format="D MMM YYYY h:mm a" element={RegText}>
+              <Moment interval={0} format="YYYY MMM D h:mm a" element={RegText}>
                 {(tx?.time || 0) * 1000}
               </Moment>
             </View>
@@ -71,7 +104,7 @@ const TxDetail: React.FunctionComponent<TxDetailProps> = ({tx, closeModal}) => {
             </View>
           </View>
 
-          <View style={{display: 'flex', marginTop: 10}}>
+          <View style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-start', marginTop: 10}}>
             <FadeText>TxID</FadeText>
             <TouchableOpacity
               onPress={() => {
@@ -81,10 +114,13 @@ const TxDetail: React.FunctionComponent<TxDetailProps> = ({tx, closeModal}) => {
                   setExpandTxid(true);
                 }
               }}>
-              <RegText>
-                {!expandTxid && Utils.trimToSmall(tx?.txid, 10)}
-                {expandTxid && tx?.txid}
-              </RegText>
+              {!expandTxid && <RegText>{Utils.trimToSmall(tx?.txid, 10)}</RegText>}
+              {expandTxid && (
+                <>
+                  <RegText>{tx?.txid}</RegText>
+                  <ClickableText onPress={() => handleTxIDClick(tx?.txid)}>View on block explorer</ClickableText>
+                </>
+              )}
             </TouchableOpacity>
           </View>
 
@@ -231,7 +267,7 @@ const TxSummaryLine: React.FunctionComponent<TxSummaryLineProps> = ({
             <FadeText style={{fontSize: 18}}>{displayAddress}</FadeText>
             <View style={{display: 'flex', flexDirection: 'row'}}>
               <FadeText>{tx.type === 'sent' ? 'Sent ' : 'Received '}</FadeText>
-              <Moment interval={0} format="h:mm a D MMM" element={FadeText}>
+              <Moment interval={0} format="MMM D, h:mm a" element={FadeText}>
                 {(tx?.time || 0) * 1000}
               </Moment>
             </View>

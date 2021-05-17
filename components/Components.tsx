@@ -143,9 +143,7 @@ export const ClickableText: React.FunctionComponent<any> = props => {
 
   return (
     <TouchableOpacity onPress={onPress}>
-      <Text style={{color: colors.text, borderBottomColor: colors.text, borderBottomWidth: 1, ...props.style}}>
-        {props.children}
-      </Text>
+      <Text style={{color: colors.text, textDecorationLine: 'underline', ...props.style}}>{props.children}</Text>
     </TouchableOpacity>
   );
 };
