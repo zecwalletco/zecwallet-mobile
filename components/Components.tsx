@@ -83,7 +83,7 @@ export const PrimaryButton: React.FunctionComponent<any> = ({title, disabled, on
         paddingLeft: 20,
         paddingRight: 20,
         borderRadius: 10,
-        width: 250,
+        width: '40%',
       }}
       onPress={() => !disabled && onPress()}>
       <Text style={{color: colors.background, fontWeight: 'bold', textTransform: 'uppercase', textAlign: 'center'}}>
@@ -106,7 +106,7 @@ export const SecondaryButton: React.FunctionComponent<any> = ({title, disabled, 
         paddingLeft: 20,
         paddingRight: 20,
         borderRadius: 10,
-        width: 250,
+        width: '40%',
       }}
       onPress={() => !disabled && onPress()}>
       <Text style={{color: colors.text, fontWeight: 'bold', textTransform: 'uppercase', textAlign: 'center'}}>

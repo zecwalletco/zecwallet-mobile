@@ -16,7 +16,7 @@ import {
   ClickableText,
 } from '../components/Components';
 import {Info, SendPageState, SendProgress, ToAddr, TotalBalance} from '../app/AppState';
-import {faQrcode, faCheck} from '@fortawesome/free-solid-svg-icons';
+import {faQrcode, faCheck, faInfo} from '@fortawesome/free-solid-svg-icons';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {useTheme} from '@react-navigation/native';
 import {NavigationScreenProp} from 'react-navigation';
@@ -221,8 +221,10 @@ const ConfirmModalContent: React.FunctionComponent<ConfirmModalProps> = ({
           alignItems: 'center',
           marginTop: 10,
         }}>
-        <PrimaryButton title={'Confirm'} onPress={confirmSend} />
-        <SecondaryButton style={{marginTop: 20}} title={'Cancel'} onPress={closeModal} />
+        <View style={{display: 'flex', flexDirection: 'row', justifyContent: 'center'}}>
+          <PrimaryButton title={'Confirm'} onPress={confirmSend} />
+          <SecondaryButton style={{marginLeft: 20}} title={'Cancel'} onPress={closeModal} />
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -391,7 +393,7 @@ const SendScreen: React.FunctionComponent<SendScreenProps> = ({
   };
 
   const spendable = totalBalance.transparentBal + totalBalance.verifiedPrivate;
-  //const stillConfirming = spendable !== totalBalance.total;
+  const stillConfirming = spendable !== totalBalance.total;
 
   const setMaxAmount = (idx: number) => {
     let max = spendable - defaultFee;
@@ -402,7 +404,11 @@ const SendScreen: React.FunctionComponent<SendScreenProps> = ({
   };
 
   const getMaxAmount = (): number => {
-    return spendable - defaultFee;
+    let max = spendable - defaultFee;
+    if (max < 0) {
+      return 0;
+    }
+    return max;
   };
 
   const memoEnabled = Utils.isSapling(sendPageState.toaddrs[0].to);
@@ -594,25 +600,28 @@ const SendScreen: React.FunctionComponent<SendScreenProps> = ({
                   onChangeText={(text: string) => updateToField(i, null, null, text, null)}
                 />
               </View>
-              {/* {stillConfirming && (
-                <View
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    marginTop: 5,
-                    backgroundColor: colors.card,
-                    padding: 5,
-                    borderRadius: 10,
-                  }}>
-                  <FontAwesomeIcon icon={faInfo} size={14} color={colors.primary} />
-                  <FadeText>Some funds are still confirming</FadeText>
+
+              <View style={{display: 'flex', flexDirection: 'column'}}>
+                <View style={{display: 'flex', flexDirection: 'row', marginTop: 10}}>
+                  <FadeText>Spendable: ᙇ {Utils.maxPrecisionTrimmed(getMaxAmount())} </FadeText>
+                  <ClickableText style={{marginLeft: 5}} onPress={() => setMaxAmount(i)}>
+                    Send All
+                  </ClickableText>
                 </View>
-              )} */}
-              <View style={{display: 'flex', flexDirection: 'row', marginTop: 10}}>
-                <FadeText>Spendable: ᙇ {getMaxAmount()} </FadeText>
-                <ClickableText style={{marginLeft: 5}} onPress={() => setMaxAmount(i)}>
-                  Send All
-                </ClickableText>
+                {stillConfirming && (
+                  <View
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'row',
+                      marginTop: 5,
+                      backgroundColor: colors.card,
+                      padding: 5,
+                      borderRadius: 10,
+                    }}>
+                    <FontAwesomeIcon icon={faInfo} size={14} color={colors.primary} />
+                    <FadeText>Some funds still confirming</FadeText>
+                  </View>
+                )}
               </View>
 
               {memoEnabled && (
@@ -635,13 +644,13 @@ const SendScreen: React.FunctionComponent<SendScreenProps> = ({
         <View
           style={{
             display: 'flex',
-            flexDirection: 'column',
+            flexDirection: 'row',
             justifyContent: 'center',
             alignItems: 'center',
             margin: 20,
           }}>
           <PrimaryButton title="Send" disabled={!sendButtonEnabled} onPress={() => setConfirmModalVisible(true)} />
-          <SecondaryButton style={{marginTop: 10}} title="Clear" onPress={() => clearToAddrs()} />
+          <SecondaryButton style={{marginLeft: 10}} title="Clear" onPress={() => clearToAddrs()} />
         </View>
       </ScrollView>
     </View>
