@@ -137,6 +137,19 @@ export const FadeText: React.FunctionComponent<any> = props => {
   return <Text style={{opacity: 0.65, color: colors.text, ...props.style}}>{props.children}</Text>;
 };
 
+export const ClickableText: React.FunctionComponent<any> = props => {
+  const {colors} = useTheme();
+  const onPress = props.onPress || null;
+
+  return (
+    <TouchableOpacity onPress={onPress}>
+      <Text style={{color: colors.text, borderBottomColor: colors.text, borderBottomWidth: 1, ...props.style}}>
+        {props.children}
+      </Text>
+    </TouchableOpacity>
+  );
+};
+
 export const ErrorText: React.FunctionComponent<any> = props => {
   return <Text style={{color: 'red', ...props.style}}>{props.children}</Text>;
 };

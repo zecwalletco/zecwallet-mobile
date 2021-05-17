@@ -13,9 +13,10 @@ import {
   RegText,
   ZecAmount,
   UsdAmount,
+  ClickableText,
 } from '../components/Components';
 import {Info, SendPageState, SendProgress, ToAddr, TotalBalance} from '../app/AppState';
-import {faQrcode, faCheck, faInfo} from '@fortawesome/free-solid-svg-icons';
+import {faQrcode, faCheck} from '@fortawesome/free-solid-svg-icons';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {useTheme} from '@react-navigation/native';
 import {NavigationScreenProp} from 'react-navigation';
@@ -29,7 +30,13 @@ import {parseZcashURI} from '../app/uris';
 
 type ScannerProps = {
   idx: number;
-  updateToField: (idx: number, address: string | null, amount: string | null, memo: string | null) => void;
+  updateToField: (
+    idx: number,
+    address: string | null,
+    amount: string | null,
+    amountUSD: string | null,
+    memo: string | null,
+  ) => void;
   closeModal: () => void;
 };
 function ScanScreen({idx, updateToField, closeModal}: ScannerProps) {
@@ -37,7 +44,7 @@ function ScanScreen({idx, updateToField, closeModal}: ScannerProps) {
 
   const validateAddress = (scannedAddress: string) => {
     if (Utils.isSapling(scannedAddress) || Utils.isTransparent(scannedAddress)) {
-      updateToField(idx, scannedAddress, null, null);
+      updateToField(idx, scannedAddress, null, null, null);
       closeModal();
     } else {
       // Try to parse as a URI
@@ -45,7 +52,7 @@ function ScanScreen({idx, updateToField, closeModal}: ScannerProps) {
         const targets = parseZcashURI(scannedAddress);
 
         if (Array.isArray(targets)) {
-          updateToField(idx, scannedAddress, null, null);
+          updateToField(idx, scannedAddress, null, null, null);
           closeModal();
         } else {
           setError(`URI Error: ${targets}`);
@@ -269,7 +276,13 @@ const SendScreen: React.FunctionComponent<SendScreenProps> = ({
     };
   }, [slideAnim, titleViewHeight]);
 
-  const updateToField = (idx: number, address: string | null, amount: string | null, memo: string | null) => {
+  const updateToField = (
+    idx: number,
+    address: string | null,
+    amount: string | null,
+    amountUSD: string | null,
+    memo: string | null,
+  ) => {
     // Create the new state object
     const newState = new SendPageState();
     newState.fromaddr = sendPageState.fromaddr;
@@ -316,6 +329,20 @@ const SendScreen: React.FunctionComponent<SendScreenProps> = ({
 
     if (amount !== null) {
       toAddr.amount = amount;
+      if (toAddr.amount && info?.zecPrice) {
+        toAddr.amountUSD = (parseFloat(toAddr.amount) * (info?.zecPrice || 0)).toFixed(2);
+      } else {
+        toAddr.amountUSD = '';
+      }
+    }
+
+    if (amountUSD !== null) {
+      toAddr.amountUSD = amountUSD;
+      if (toAddr.amountUSD && info?.zecPrice) {
+        toAddr.amount = Utils.maxPrecisionTrimmed(parseFloat(amountUSD) / info?.zecPrice);
+      } else {
+        toAddr.amount = '';
+      }
     }
 
     if (memo !== null) {
@@ -364,14 +391,18 @@ const SendScreen: React.FunctionComponent<SendScreenProps> = ({
   };
 
   const spendable = totalBalance.transparentBal + totalBalance.verifiedPrivate;
-  const stillConfirming = spendable !== totalBalance.total;
+  //const stillConfirming = spendable !== totalBalance.total;
 
   const setMaxAmount = (idx: number) => {
     let max = spendable - defaultFee;
     if (max < 0) {
       max = 0;
     }
-    updateToField(idx, null, Utils.maxPrecisionTrimmed(max), null);
+    updateToField(idx, null, Utils.maxPrecisionTrimmed(max), null, null);
+  };
+
+  const getMaxAmount = (): number => {
+    return spendable - defaultFee;
   };
 
   const memoEnabled = Utils.isSapling(sendPageState.toaddrs[0].to);
@@ -393,7 +424,7 @@ const SendScreen: React.FunctionComponent<SendScreenProps> = ({
     if (to.amount !== '') {
       if (
         Utils.parseLocaleFloat(to.amount) > 0 &&
-        Utils.parseLocaleFloat(to.amount) <= parseFloat((spendable - defaultFee).toFixed(8))
+        Utils.parseLocaleFloat(to.amount) <= parseFloat(getMaxAmount().toFixed(8))
       ) {
         return 1;
       } else {
@@ -477,8 +508,8 @@ const SendScreen: React.FunctionComponent<SendScreenProps> = ({
             <RegText style={{marginTop: 5, padding: 5}}>Spendable</RegText>
             <TouchableOpacity onPress={() => setMaxAmount(0)}>
               <View style={{display: 'flex', alignItems: 'center'}}>
-                <ZecAmount size={36} amtZec={spendable} />
-                <UsdAmount style={{marginTop: 5}} price={zecPrice} amtZec={spendable} />
+                <ZecAmount size={36} amtZec={getMaxAmount()} />
+                <UsdAmount style={{marginTop: 5}} price={zecPrice} amtZec={getMaxAmount()} />
               </View>
             </TouchableOpacity>
           </View>
@@ -515,7 +546,7 @@ const SendScreen: React.FunctionComponent<SendScreenProps> = ({
                   placeholderTextColor="#777777"
                   style={{flexGrow: 1, maxWidth: '90%'}}
                   value={ta.to}
-                  onChangeText={(text: string) => updateToField(i, text, null, null)}
+                  onChangeText={(text: string) => updateToField(i, text, null, null, null)}
                 />
                 <TouchableOpacity
                   onPress={() => {
@@ -527,10 +558,7 @@ const SendScreen: React.FunctionComponent<SendScreenProps> = ({
               </View>
 
               <View style={{marginTop: 30, display: 'flex', flexDirection: 'row', justifyContent: 'space-between'}}>
-                <FadeText>Amount (ZEC)</FadeText>
-                {amountValidationState[i] === 1 && (
-                  <UsdAmount price={zecPrice} amtZec={Utils.parseLocaleFloat(ta.amount)} />
-                )}
+                <FadeText>Amount</FadeText>
                 {amountValidationState[i] === -1 && <ErrorText>Invalid Amount!</ErrorText>}
               </View>
 
@@ -539,22 +567,34 @@ const SendScreen: React.FunctionComponent<SendScreenProps> = ({
                   display: 'flex',
                   flexDirection: 'row',
                   justifyContent: 'flex-start',
-                  borderBottomColor: colors.card,
-                  borderBottomWidth: 2,
                 }}>
+                <FadeText style={{marginTop: 15}}>ZEC</FadeText>
                 <RegTextInput
                   placeholder={`0${decimalSeparator}0`}
                   placeholderTextColor="#777777"
                   keyboardType="numeric"
-                  style={{flexGrow: 1, maxWidth: '90%'}}
+                  style={{
+                    flexGrow: 1,
+                    maxWidth: '35%',
+                    borderBottomColor: colors.card,
+                    borderBottomWidth: 2,
+                    marginRight: 20,
+                  }}
                   value={ta.amount.toString()}
-                  onChangeText={(text: string) => updateToField(i, null, text, null)}
+                  onChangeText={(text: string) => updateToField(i, null, text, null, null)}
                 />
-                {/* <TouchableOpacity onPress={() => setMaxAmount(i)}>
-                  <FontAwesomeIcon style={{margin: 5}} size={24} icon={faArrowAltCircleUp} color={colors.text} />
-                </TouchableOpacity> */}
+
+                <FadeText style={{marginTop: 15}}>USD</FadeText>
+                <RegTextInput
+                  placeholder={`0${decimalSeparator}0`}
+                  placeholderTextColor="#777777"
+                  keyboardType="numeric"
+                  style={{flexGrow: 1, maxWidth: '40%', borderBottomColor: colors.card, borderBottomWidth: 2}}
+                  value={ta.amountUSD.toString()}
+                  onChangeText={(text: string) => updateToField(i, null, null, text, null)}
+                />
               </View>
-              {stillConfirming && (
+              {/* {stillConfirming && (
                 <View
                   style={{
                     display: 'flex',
@@ -567,7 +607,13 @@ const SendScreen: React.FunctionComponent<SendScreenProps> = ({
                   <FontAwesomeIcon icon={faInfo} size={14} color={colors.primary} />
                   <FadeText>Some funds are still confirming</FadeText>
                 </View>
-              )}
+              )} */}
+              <View style={{display: 'flex', flexDirection: 'row', marginTop: 10}}>
+                <FadeText>Spendable: ᙇ {getMaxAmount()} </FadeText>
+                <ClickableText style={{marginLeft: 5}} onPress={() => setMaxAmount(i)}>
+                  Send All
+                </ClickableText>
+              </View>
 
               {memoEnabled && (
                 <>
@@ -577,7 +623,7 @@ const SendScreen: React.FunctionComponent<SendScreenProps> = ({
                       multiline
                       style={{flexGrow: 1, borderBottomColor: colors.card, borderBottomWidth: 2}}
                       value={ta.memo}
-                      onChangeText={(text: string) => updateToField(i, null, null, text)}
+                      onChangeText={(text: string) => updateToField(i, null, null, null, text)}
                     />
                   </View>
                 </>
