@@ -2,7 +2,7 @@
 import React, {useState, useEffect, useRef} from 'react';
 import QRCodeScanner from 'react-native-qrcode-scanner';
 import * as Progress from 'react-native-progress';
-import {View, ScrollView, Modal, Image, Alert, SafeAreaView, Keyboard} from 'react-native';
+import {View, ScrollView, Modal, Image, Alert, SafeAreaView, Keyboard, Platform} from 'react-native';
 import {
   FadeText,
   BoldText,
@@ -581,21 +581,29 @@ const SendScreen: React.FunctionComponent<SendScreenProps> = ({
                   keyboardType="numeric"
                   style={{
                     flexGrow: 1,
-                    maxWidth: '35%',
+                    width: '35%',
                     borderBottomColor: colors.card,
                     borderBottomWidth: 2,
-                    marginRight: 20,
+                    marginLeft: 20,
+                    marginTop: Platform.OS === 'ios' ? 15 : 0,
                   }}
                   value={ta.amount.toString()}
                   onChangeText={(text: string) => updateToField(i, null, text, null, null)}
                 />
 
-                <FadeText style={{marginTop: 15}}>USD</FadeText>
+                <FadeText style={{marginTop: 15, marginLeft: 20}}>USD</FadeText>
                 <RegTextInput
                   placeholder={`0${decimalSeparator}0`}
                   placeholderTextColor="#777777"
                   keyboardType="numeric"
-                  style={{flexGrow: 1, maxWidth: '40%', borderBottomColor: colors.card, borderBottomWidth: 2}}
+                  style={{
+                    flexGrow: 1,
+                    width: '35%',
+                    borderBottomColor: colors.card,
+                    borderBottomWidth: 2,
+                    marginLeft: 20,
+                    marginTop: Platform.OS === 'ios' ? 15 : 0,
+                  }}
                   value={ta.amountUSD.toString()}
                   onChangeText={(text: string) => updateToField(i, null, null, text, null)}
                 />
