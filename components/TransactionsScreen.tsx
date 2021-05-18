@@ -161,7 +161,7 @@ const TxDetail: React.FunctionComponent<TxDetailProps> = ({tx, closeModal}) => {
                 <View style={{marginTop: 10}}>
                   <FadeText>Amount</FadeText>
                   <View style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-between'}}>
-                    <ZecAmount amtZec={txd?.amount} size={18} />
+                    <ZecAmount amtZec={txd?.amount} size={18} zecSymbol={'ᙇ'} />
                     <UsdAmount style={{fontSize: 18}} amtZec={txd?.amount} price={tx?.zec_price} />
                   </View>
                   <View style={{display: 'flex', flexDirection: 'row', justifyContent: 'flex-end'}}>
@@ -191,7 +191,7 @@ const TxDetail: React.FunctionComponent<TxDetailProps> = ({tx, closeModal}) => {
             <View style={{display: 'flex', marginTop: 10}}>
               <FadeText>Tx Fee</FadeText>
               <View style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-between'}}>
-                <ZecAmount amtZec={fee} size={18} />
+                <ZecAmount amtZec={fee} size={18} zecSymbol={'ᙇ'} />
                 <UsdAmount style={{fontSize: 18}} amtZec={fee} price={tx?.zec_price} />
               </View>
             </View>

@@ -574,35 +574,37 @@ const SendScreen: React.FunctionComponent<SendScreenProps> = ({
                   flexDirection: 'row',
                   justifyContent: 'flex-start',
                 }}>
-                <FadeText style={{marginTop: 15}}>ZEC</FadeText>
+                <RegText style={{marginTop: 15}}>ZEC</RegText>
                 <RegTextInput
                   placeholder={`0${decimalSeparator}0`}
                   placeholderTextColor="#777777"
                   keyboardType="numeric"
                   style={{
-                    flexGrow: 1,
+                    //flexGrow: 1,
+                    fontSize: 18,
                     width: '35%',
                     borderBottomColor: colors.card,
                     borderBottomWidth: 2,
                     marginLeft: 20,
-                    marginTop: Platform.OS === 'ios' ? 15 : 0,
+                    marginTop: Platform.OS === 'ios' ? 15 : 3,
                   }}
                   value={ta.amount.toString()}
                   onChangeText={(text: string) => updateToField(i, null, text, null, null)}
                 />
 
-                <FadeText style={{marginTop: 15, marginLeft: 20}}>USD</FadeText>
+                <RegText style={{marginTop: 15, marginLeft: 20}}>USD</RegText>
                 <RegTextInput
                   placeholder={`0${decimalSeparator}0`}
                   placeholderTextColor="#777777"
                   keyboardType="numeric"
                   style={{
-                    flexGrow: 1,
+                    //flexGrow: 1,
+                    fontSize: 18,
                     width: '35%',
                     borderBottomColor: colors.card,
                     borderBottomWidth: 2,
                     marginLeft: 20,
-                    marginTop: Platform.OS === 'ios' ? 15 : 0,
+                    marginTop: Platform.OS === 'ios' ? 15 : 3,
                   }}
                   value={ta.amountUSD.toString()}
                   onChangeText={(text: string) => updateToField(i, null, null, text, null)}
@@ -612,7 +614,9 @@ const SendScreen: React.FunctionComponent<SendScreenProps> = ({
               <View style={{display: 'flex', flexDirection: 'column'}}>
                 <View style={{display: 'flex', flexDirection: 'row', marginTop: 10}}>
                   <FadeText>Spendable: ᙇ {Utils.maxPrecisionTrimmed(getMaxAmount())} </FadeText>
-                  <ClickableText style={{marginLeft: 5}} onPress={() => setMaxAmount(i)}>
+                  <ClickableText
+                    style={{marginLeft: 5, marginTop: Platform.OS === 'ios' ? 2 : 0}}
+                    onPress={() => setMaxAmount(i)}>
                     Send All
                   </ClickableText>
                 </View>
