@@ -10,7 +10,7 @@ import Utils from '../app/utils';
 import {useTheme} from '@react-navigation/native';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {faBars} from '@fortawesome/free-solid-svg-icons';
+import {faBars, faEllipsisV} from '@fortawesome/free-solid-svg-icons';
 // @ts-ignore
 import OptionsMenu from 'react-native-option-menu';
 import RPC from '../app/rpc';
@@ -67,11 +67,18 @@ const SingleAddressDisplay: React.FunctionComponent<SingleAddress> = ({addresses
     }
   };
 
+  let addressIndex = '';
+  if (Utils.isSapling(address)) {
+    addressIndex = `m/32'/133'/${currentAddressIndex}`;
+  } else {
+    addressIndex = `m/44'/133'/0'/0/${currentAddressIndex}`;
+  }
+
   return (
     <View style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
-      <FadeText style={{marginTop: 20}}>m/0'/0'/{currentAddressIndex}</FadeText>
+      <FadeText style={{marginTop: 10}}>{addressIndex}</FadeText>
       <View style={{padding: 10, backgroundColor: 'rgb(255, 255, 255)', marginTop: 5}}>
-        <QRCode value={address} size={250} ecl="M" />
+        <QRCode value={address} size={225} ecl="L" />
       </View>
       <View style={{display: 'flex', flexDirection: 'row', flexWrap: 'wrap', marginTop: 10, justifyContent: 'center'}}>
         {chunks.map(c => (
@@ -127,8 +134,6 @@ const ReceiveScreen: React.FunctionComponent<ReceiveScreenProps> = ({
   const zaddrs = addresses.filter(a => Utils.isSapling(a)) || null;
   const taddrs = addresses.filter(a => Utils.isTransparent(a)) || null;
 
-  const MoreIcon = require('../assets/img/more.png');
-
   const renderScene: (routes: any) => JSX.Element | undefined = ({route}) => {
     switch (route.key) {
       case 'zaddr':
@@ -160,27 +165,21 @@ const ReceiveScreen: React.FunctionComponent<ReceiveScreenProps> = ({
         style={{
           display: 'flex',
           flexDirection: 'row',
-          alignItems: 'center',
-          alignContent: 'space-between',
+          justifyContent: 'space-between',
           backgroundColor: colors.card,
-          paddingBottom: 25,
-          paddingLeft: 100,
-          zIndex: -1,
+          padding: 15,
         }}>
-        <Text style={{marginTop: 5, padding: 5, color: colors.text, fontSize: 28}}>Wallet Address</Text>
-        <OptionsMenu
-          button={MoreIcon}
-          buttonStyle={{width: 32, height: 32, margin: 7.5, resizeMode: 'contain'}}
-          destructiveIndex={1}
-          options={['Add Z Address', 'Add T Address', 'Cancel']}
-          actions={[addZ, addT]}
-        />
-      </View>
-
-      <View style={{backgroundColor: '#353535', padding: 10, position: 'absolute'}}>
         <TouchableOpacity onPress={toggleMenuDrawer}>
           <FontAwesomeIcon icon={faBars} size={20} color={'#ffffff'} />
         </TouchableOpacity>
+        <Text style={{paddingBottom: 25, color: colors.text, fontSize: 28}}>Wallet Address</Text>
+        <OptionsMenu
+          customButton={<FontAwesomeIcon icon={faEllipsisV} color={'#ffffff'} size={20} />}
+          buttonStyle={{width: 32, height: 32, margin: 7.5, resizeMode: 'contain'}}
+          destructiveIndex={2}
+          options={['New Z Address', 'New T Address', 'Cancel']}
+          actions={[addZ, addT]}
+        />
       </View>
 
       <View style={{display: 'flex', alignItems: 'center', marginTop: -25}}>
