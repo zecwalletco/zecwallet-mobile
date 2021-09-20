@@ -10,21 +10,19 @@ import Utils from '../app/utils';
 import {useTheme} from '@react-navigation/native';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {faBars, faEllipsisV} from '@fortawesome/free-solid-svg-icons';
+import {faBars} from '@fortawesome/free-solid-svg-icons';
+// @ts-ignore
 import OptionsMenu from 'react-native-option-menu';
 import RPC from '../app/rpc';
 
 type SingleAddress = {
   addresses: string[] | null;
-  currentAddressIndex: number;
-  setCurrentAddressIndex: (i: number) => void;
+  displayAddress: string;
 };
 
-const SingleAddressDisplay: React.FunctionComponent<SingleAddress> = ({
-  addresses,
-  currentAddressIndex,
-  setCurrentAddressIndex,
-}) => {
+const SingleAddressDisplay: React.FunctionComponent<SingleAddress> = ({addresses, displayAddress}) => {
+  let [currentAddressIndex, setCurrentAddressIndex] = useState(0);
+
   let address = 'No Address';
   if (addresses && addresses.length > 0 && currentAddressIndex < addresses.length) {
     address = addresses[currentAddressIndex];
@@ -33,6 +31,14 @@ const SingleAddressDisplay: React.FunctionComponent<SingleAddress> = ({
   const multipleAddresses = addresses && addresses.length > 1;
   // console.log(`Addresses ${addresses}: ${multipleAddresses}`);
   const {colors} = useTheme();
+
+  if (addresses) {
+    let displayAddressIndex = addresses?.findIndex(a => a === displayAddress);
+
+    if (currentAddressIndex !== displayAddressIndex && displayAddressIndex >= 0) {
+      setCurrentAddressIndex(displayAddressIndex);
+    }
+  }
 
   const chunks = Utils.splitAddressIntoChunks(address, Utils.isSapling(address) ? 4 : 2);
   const fixedWidthFont = Platform.OS === 'android' ? 'monospace' : 'Courier';
@@ -113,7 +119,9 @@ const ReceiveScreen: React.FunctionComponent<ReceiveScreenProps> = ({
     {key: 'zaddr', title: 'Z Address'},
     {key: 'taddr', title: 'T Address'},
   ]);
-  let [currentAddressIndex, setCurrentAddressIndex] = useState(0);
+
+  const [displayAddress, setDisplayAddress] = useState('');
+
   const {colors} = useTheme();
 
   const zaddrs = addresses.filter(a => Utils.isSapling(a)) || null;
@@ -124,38 +132,26 @@ const ReceiveScreen: React.FunctionComponent<ReceiveScreenProps> = ({
   const renderScene: (routes: any) => JSX.Element | undefined = ({route}) => {
     switch (route.key) {
       case 'zaddr':
-        return (
-          <SingleAddressDisplay
-            addresses={zaddrs}
-            currentAddressIndex={currentAddressIndex}
-            setCurrentAddressIndex={setCurrentAddressIndex}
-          />
-        );
+        return <SingleAddressDisplay addresses={zaddrs} displayAddress={displayAddress} />;
       case 'taddr':
-        return (
-          <SingleAddressDisplay
-            addresses={taddrs}
-            currentAddressIndex={currentAddressIndex}
-            setCurrentAddressIndex={setCurrentAddressIndex}
-          />
-        );
+        return <SingleAddressDisplay addresses={taddrs} displayAddress={displayAddress} />;
     }
   };
 
   const addZ = async () => {
     console.log('New Z');
-    RPC.createNewAddress(true);
+    const newAddress = await RPC.createNewAddress(true);
     await fetchTotalBalance();
     setIndex(0);
-    setCurrentAddressIndex(zaddrs.length - 1);
+    setDisplayAddress(newAddress);
   };
 
   const addT = async () => {
     console.log('New T');
-    RPC.createNewAddress(false);
+    const newAddress = await RPC.createNewAddress(false);
     await fetchTotalBalance();
     setIndex(1);
-    setCurrentAddressIndex(taddrs.length - 1);
+    setDisplayAddress(newAddress);
   };
 
   const renderTabBar: (props: any) => JSX.Element = props => (

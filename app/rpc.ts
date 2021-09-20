@@ -347,7 +347,7 @@ export default class RPC {
     const allTAddresses = balanceJSON.t_addresses.map((o: any) => o.address);
     const allAddresses = allZAddresses.concat(allTAddresses);
 
-    console.log(`All addresses: ${allAddresses}`);
+    // console.log(`All addresses: ${allAddresses}`);
 
     this.fnSetAllAddresses(allAddresses);
   }
@@ -359,7 +359,7 @@ export default class RPC {
     return privKeyJSON[0].private_key;
   }
 
-  static async createNewAddress(zaddress: boolean) {
+  static async createNewAddress(zaddress: boolean): Promise<string> {
     const addrStr = await RPCModule.execute('new', zaddress ? 'z' : 't');
     const addrJSON = JSON.parse(addrStr);
 
