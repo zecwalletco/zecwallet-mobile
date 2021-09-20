@@ -99,6 +99,7 @@ export default class RPC {
   }
 
   static async doRescan() {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const syncstr = await RPCModule.execute('rescan', '');
     // console.log(`rescan exec result: ${syncstr}`);
   }
@@ -346,6 +347,8 @@ export default class RPC {
     const allTAddresses = balanceJSON.t_addresses.map((o: any) => o.address);
     const allAddresses = allZAddresses.concat(allTAddresses);
 
+    console.log(`All addresses: ${allAddresses}`);
+
     this.fnSetAllAddresses(allAddresses);
   }
 
@@ -359,6 +362,8 @@ export default class RPC {
   static async createNewAddress(zaddress: boolean) {
     const addrStr = await RPCModule.execute('new', zaddress ? 'z' : 't');
     const addrJSON = JSON.parse(addrStr);
+
+    console.log(addrJSON);
 
     return addrJSON[0];
   }

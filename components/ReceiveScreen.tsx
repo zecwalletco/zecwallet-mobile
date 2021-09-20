@@ -1,26 +1,37 @@
 /* eslint-disable react-native/no-inline-styles */
-import React from 'react';
+import React, {useState} from 'react';
 import {View, Dimensions, Clipboard, Platform, Image, Text} from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import {TabView, TabBar} from 'react-native-tab-view';
 import Toast from 'react-native-simple-toast';
-import {ClickableText, FadeText} from '../components/Components';
+import {ClickableText, FadeText, SecondaryButton} from '../components/Components';
 import {Info} from '../app/AppState';
 import Utils from '../app/utils';
 import {useTheme} from '@react-navigation/native';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {faBars} from '@fortawesome/free-solid-svg-icons';
+import {faBars, faEllipsisV} from '@fortawesome/free-solid-svg-icons';
+import OptionsMenu from 'react-native-option-menu';
+import RPC from '../app/rpc';
 
 type SingleAddress = {
-  address: string | null;
+  addresses: string[] | null;
+  currentAddressIndex: number;
+  setCurrentAddressIndex: (i: number) => void;
 };
 
-const SingleAddressDisplay: React.FunctionComponent<SingleAddress> = ({address}) => {
-  if (!address) {
-    address = 'No Address';
+const SingleAddressDisplay: React.FunctionComponent<SingleAddress> = ({
+  addresses,
+  currentAddressIndex,
+  setCurrentAddressIndex,
+}) => {
+  let address = 'No Address';
+  if (addresses && addresses.length > 0 && currentAddressIndex < addresses.length) {
+    address = addresses[currentAddressIndex];
   }
 
+  const multipleAddresses = addresses && addresses.length > 1;
+  // console.log(`Addresses ${addresses}: ${multipleAddresses}`);
   const {colors} = useTheme();
 
   const chunks = Utils.splitAddressIntoChunks(address, Utils.isSapling(address) ? 4 : 2);
@@ -33,31 +44,54 @@ const SingleAddressDisplay: React.FunctionComponent<SingleAddress> = ({address})
     }
   };
 
+  const prev = () => {
+    if (addresses) {
+      let newIndex = currentAddressIndex - 1;
+      if (newIndex < 0) {
+        newIndex = addresses?.length - 1;
+      }
+      setCurrentAddressIndex(newIndex);
+    }
+  };
+
+  const next = () => {
+    if (addresses) {
+      const newIndex = (currentAddressIndex + 1) % addresses?.length;
+      setCurrentAddressIndex(newIndex);
+    }
+  };
+
   return (
     <View style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
-      <View style={{padding: 10, backgroundColor: 'rgb(255, 255, 255)', marginTop: 20}}>
+      <FadeText style={{marginTop: 20}}>m/0'/0'/{currentAddressIndex}</FadeText>
+      <View style={{padding: 10, backgroundColor: 'rgb(255, 255, 255)', marginTop: 5}}>
         <QRCode value={address} size={250} ecl="M" />
       </View>
-      <TouchableOpacity onPress={doCopy}>
-        <View style={{display: 'flex', flexDirection: 'row', flexWrap: 'wrap', marginTop: 10}}>
-          {chunks.map(c => (
-            <FadeText
-              key={c}
-              style={{
-                flexBasis: '100%',
-                textAlign: 'center',
-                fontFamily: fixedWidthFont,
-                fontSize: 18,
-                color: colors.text,
-              }}>
-              {c}
-            </FadeText>
-          ))}
-        </View>
-      </TouchableOpacity>
+      <View style={{display: 'flex', flexDirection: 'row', flexWrap: 'wrap', marginTop: 10, justifyContent: 'center'}}>
+        {chunks.map(c => (
+          <FadeText
+            key={c}
+            style={{
+              flexBasis: '100%',
+              textAlign: 'center',
+              fontFamily: fixedWidthFont,
+              fontSize: 18,
+              color: colors.text,
+            }}>
+            {c}
+          </FadeText>
+        ))}
+      </View>
       <ClickableText style={{marginTop: 10}} onPress={doCopy}>
         Tap To Copy
       </ClickableText>
+
+      {multipleAddresses && (
+        <View style={{display: 'flex', flexDirection: 'row', marginTop: 10, alignItems: 'center'}}>
+          <SecondaryButton title={'Prev'} style={{width: '25%', margin: 10}} onPress={prev} />
+          <SecondaryButton title={'Next'} style={{width: '25%', margin: 10}} onPress={next} />
+        </View>
+      )}
     </View>
   );
 };
@@ -66,32 +100,85 @@ type ReceiveScreenProps = {
   info: Info | null;
   addresses: string[];
   toggleMenuDrawer: () => void;
+  fetchTotalBalance: () => Promise<void>;
 };
 
-const ReceiveScreen: React.FunctionComponent<ReceiveScreenProps> = ({addresses, toggleMenuDrawer}) => {
+const ReceiveScreen: React.FunctionComponent<ReceiveScreenProps> = ({
+  addresses,
+  toggleMenuDrawer,
+  fetchTotalBalance,
+}) => {
   const [index, setIndex] = React.useState(0);
   const [routes] = React.useState([
     {key: 'zaddr', title: 'Z Address'},
     {key: 'taddr', title: 'T Address'},
   ]);
+  let [currentAddressIndex, setCurrentAddressIndex] = useState(0);
   const {colors} = useTheme();
 
-  const zaddr = addresses.find(a => Utils.isSapling(a)) || null;
-  const taddr = addresses.find(a => Utils.isTransparent(a)) || null;
+  const zaddrs = addresses.filter(a => Utils.isSapling(a)) || null;
+  const taddrs = addresses.filter(a => Utils.isTransparent(a)) || null;
+
+  const MoreIcon = require('../assets/img/more.png');
 
   const renderScene: (routes: any) => JSX.Element | undefined = ({route}) => {
     switch (route.key) {
       case 'zaddr':
-        return <SingleAddressDisplay address={zaddr} />;
+        return (
+          <SingleAddressDisplay
+            addresses={zaddrs}
+            currentAddressIndex={currentAddressIndex}
+            setCurrentAddressIndex={setCurrentAddressIndex}
+          />
+        );
       case 'taddr':
-        return <SingleAddressDisplay address={taddr} />;
+        return (
+          <SingleAddressDisplay
+            addresses={taddrs}
+            currentAddressIndex={currentAddressIndex}
+            setCurrentAddressIndex={setCurrentAddressIndex}
+          />
+        );
     }
+  };
+
+  const addZ = async () => {
+    console.log('New Z');
+    RPC.createNewAddress(true);
+    await fetchTotalBalance();
+    setIndex(0);
+    setCurrentAddressIndex(zaddrs.length - 1);
+  };
+
+  const addT = async () => {
+    console.log('New T');
+    RPC.createNewAddress(false);
+    await fetchTotalBalance();
+    setIndex(1);
+    setCurrentAddressIndex(taddrs.length - 1);
   };
 
   const renderTabBar: (props: any) => JSX.Element = props => (
     <View>
-      <View style={{alignItems: 'center', backgroundColor: colors.card, paddingBottom: 25, zIndex: -1}}>
+      <View
+        style={{
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+          alignContent: 'space-between',
+          backgroundColor: colors.card,
+          paddingBottom: 25,
+          paddingLeft: 100,
+          zIndex: -1,
+        }}>
         <Text style={{marginTop: 5, padding: 5, color: colors.text, fontSize: 28}}>Wallet Address</Text>
+        <OptionsMenu
+          button={MoreIcon}
+          buttonStyle={{width: 32, height: 32, margin: 7.5, resizeMode: 'contain'}}
+          destructiveIndex={1}
+          options={['Add Z Address', 'Add T Address', 'Cancel']}
+          actions={[addZ, addT]}
+        />
       </View>
 
       <View style={{backgroundColor: '#353535', padding: 10, position: 'absolute'}}>

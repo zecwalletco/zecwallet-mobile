@@ -349,8 +349,12 @@ export default class LoadedApp extends Component<LoadedAppProps, AppState> {
     this.setState({receivePageState: newReceivePageState});
   };
 
-  doRefresh = () => {
-    this.rpc.refresh(false);
+  doRefresh = async () => {
+    await this.rpc.refresh(false);
+  };
+
+  fetchTotalBalance = async () => {
+    await this.rpc.fetchTotalBalance();
   };
 
   clearTimers = () => {
@@ -418,6 +422,7 @@ export default class LoadedApp extends Component<LoadedAppProps, AppState> {
       closeErrorModal: this.closeErrorModal,
       info,
       toggleMenuDrawer: this.toggleMenuDrawer,
+      fetchTotalBalance: this.fetchTotalBalance,
     };
 
     const menu = <Menu onItemSelected={this.onMenuItemSelected} />;
