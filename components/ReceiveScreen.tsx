@@ -18,9 +18,14 @@ import RPC from '../app/rpc';
 type SingleAddress = {
   addresses: string[] | null;
   displayAddress: string;
+  setDisplayAddress: (a: string) => void;
 };
 
-const SingleAddressDisplay: React.FunctionComponent<SingleAddress> = ({addresses, displayAddress}) => {
+const SingleAddressDisplay: React.FunctionComponent<SingleAddress> = ({
+  addresses,
+  displayAddress,
+  setDisplayAddress,
+}) => {
   let [currentAddressIndex, setCurrentAddressIndex] = useState(0);
 
   let address = 'No Address';
@@ -52,6 +57,7 @@ const SingleAddressDisplay: React.FunctionComponent<SingleAddress> = ({addresses
 
   const prev = () => {
     if (addresses) {
+      setDisplayAddress('');
       let newIndex = currentAddressIndex - 1;
       if (newIndex < 0) {
         newIndex = addresses?.length - 1;
@@ -62,6 +68,7 @@ const SingleAddressDisplay: React.FunctionComponent<SingleAddress> = ({addresses
 
   const next = () => {
     if (addresses) {
+      setDisplayAddress('');
       const newIndex = (currentAddressIndex + 1) % addresses?.length;
       setCurrentAddressIndex(newIndex);
     }
@@ -137,9 +144,21 @@ const ReceiveScreen: React.FunctionComponent<ReceiveScreenProps> = ({
   const renderScene: (routes: any) => JSX.Element | undefined = ({route}) => {
     switch (route.key) {
       case 'zaddr':
-        return <SingleAddressDisplay addresses={zaddrs} displayAddress={displayAddress} />;
+        return (
+          <SingleAddressDisplay
+            addresses={zaddrs}
+            displayAddress={displayAddress}
+            setDisplayAddress={setDisplayAddress}
+          />
+        );
       case 'taddr':
-        return <SingleAddressDisplay addresses={taddrs} displayAddress={displayAddress} />;
+        return (
+          <SingleAddressDisplay
+            addresses={taddrs}
+            displayAddress={displayAddress}
+            setDisplayAddress={setDisplayAddress}
+          />
+        );
     }
   };
 
