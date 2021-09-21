@@ -359,6 +359,13 @@ export default class RPC {
     return privKeyJSON[0].private_key;
   }
 
+  static async getViewKeyAsString(address: string): Promise<string> {
+    const privKeyStr = await RPCModule.execute('export', address);
+    const privKeyJSON = JSON.parse(privKeyStr);
+
+    return privKeyJSON[0].viewing_key;
+  }
+
   static async createNewAddress(zaddress: boolean): Promise<string> {
     const addrStr = await RPCModule.execute('new', zaddress ? 'z' : 't');
     const addrJSON = JSON.parse(addrStr);

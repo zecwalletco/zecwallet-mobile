@@ -1,6 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
 import React, {useState} from 'react';
-import {View, Dimensions, Clipboard, Platform, Image, Text} from 'react-native';
+import {View, Dimensions, Clipboard, Platform, Image, Text, Modal} from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import {TabView, TabBar} from 'react-native-tab-view';
 import Toast from 'react-native-simple-toast';
@@ -14,6 +14,7 @@ import {faBars, faEllipsisV} from '@fortawesome/free-solid-svg-icons';
 // @ts-ignore
 import OptionsMenu from 'react-native-option-menu';
 import RPC from '../app/rpc';
+import PrivKeyModal from './PrivKeyModal';
 
 type SingleAddress = {
   address: string;
@@ -29,7 +30,7 @@ const SingleAddressDisplay: React.FunctionComponent<SingleAddress> = ({address, 
 
   const multi = total > 1;
 
-  const chunks = Utils.splitAddressIntoChunks(address, Utils.isSapling(address) ? 4 : 2);
+  const chunks = Utils.splitStringIntoChunks(address, Utils.isSapling(address) ? 4 : 2);
   const fixedWidthFont = Platform.OS === 'android' ? 'monospace' : 'Courier';
 
   const doCopy = () => {
@@ -225,39 +226,97 @@ const ReceiveScreen: React.FunctionComponent<ReceiveScreenProps> = ({
     setDisplayAddress(newAddress);
   };
 
-  const renderTabBar: (props: any) => JSX.Element = props => (
-    <View>
-      <View
-        style={{
-          display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          backgroundColor: colors.card,
-          padding: 15,
-        }}>
-        <TouchableOpacity onPress={toggleMenuDrawer}>
-          <FontAwesomeIcon icon={faBars} size={20} color={'#ffffff'} />
-        </TouchableOpacity>
-        <Text style={{paddingBottom: 25, color: colors.text, fontSize: 28}}>Wallet Address</Text>
-        <OptionsMenu
-          customButton={<FontAwesomeIcon icon={faEllipsisV} color={'#ffffff'} size={20} />}
-          buttonStyle={{width: 32, height: 32, margin: 7.5, resizeMode: 'contain'}}
-          destructiveIndex={2}
-          options={['New Z Address', 'New T Address', 'Cancel']}
-          actions={[addZ, addT]}
+  const [privKeyModalVisible, setPrivKeyModalVisible] = useState(false);
+  const [keyType, setKeyType] = useState(0);
+  const [privKey, setPrivKey] = useState('');
+
+  const viewPrivKey = async () => {
+    if (zaddrs.length === 0 || taddrs.length === 0) {
+      return;
+    }
+
+    const address = index === 0 ? zaddrs[zindex] : taddrs[tindex];
+    const k = await RPC.getPrivKeyAsString(address);
+
+    setKeyType(0);
+    setPrivKeyModalVisible(true);
+    setPrivKey(k);
+  };
+
+  const viewViewingKey = async () => {
+    if (index === 1) {
+      // No viewing key for T address
+      Toast.show('T addresses do not have viewing keys', Toast.LONG);
+      return;
+    }
+
+    if (zaddrs.length === 0 || taddrs.length === 0) {
+      return;
+    }
+
+    const address = index === 0 ? zaddrs[zindex] : taddrs[tindex];
+    const k = await RPC.getViewKeyAsString(address);
+
+    setKeyType(1);
+    setPrivKeyModalVisible(true);
+    setPrivKey(k);
+  };
+
+  const renderTabBar: (props: any) => JSX.Element = props => {
+    let address = '';
+
+    if (index === 0 && zaddrs.length > 0) {
+      address = zaddrs[zindex];
+    } else if (index === 1 && taddrs.length > 0) {
+      address = taddrs[tindex];
+    }
+
+    return (
+      <View>
+        <Modal
+          animationType="slide"
+          transparent={false}
+          visible={privKeyModalVisible}
+          onRequestClose={() => setPrivKeyModalVisible(false)}>
+          <PrivKeyModal
+            address={address}
+            keyType={keyType}
+            privKey={privKey}
+            closeModal={() => setPrivKeyModalVisible(false)}
+          />
+        </Modal>
+        <View
+          style={{
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            backgroundColor: colors.card,
+            padding: 15,
+          }}>
+          <TouchableOpacity onPress={toggleMenuDrawer}>
+            <FontAwesomeIcon icon={faBars} size={20} color={'#ffffff'} />
+          </TouchableOpacity>
+          <Text style={{paddingBottom: 25, color: colors.text, fontSize: 28}}>Wallet Address</Text>
+          <OptionsMenu
+            customButton={<FontAwesomeIcon icon={faEllipsisV} color={'#ffffff'} size={20} />}
+            buttonStyle={{width: 32, height: 32, margin: 7.5, resizeMode: 'contain'}}
+            destructiveIndex={4}
+            options={['New Z Address', 'New T Address', 'Export Private Key', 'Export Viewing Key', 'Cancel']}
+            actions={[addZ, addT, viewPrivKey, viewViewingKey]}
+          />
+        </View>
+
+        <View style={{display: 'flex', alignItems: 'center', marginTop: -25}}>
+          <Image source={require('../assets/img/logobig.png')} style={{width: 50, height: 50, resizeMode: 'contain'}} />
+        </View>
+        <TabBar
+          {...props}
+          indicatorStyle={{backgroundColor: colors.primary}}
+          style={{backgroundColor: colors.background}}
         />
       </View>
-
-      <View style={{display: 'flex', alignItems: 'center', marginTop: -25}}>
-        <Image source={require('../assets/img/logobig.png')} style={{width: 50, height: 50, resizeMode: 'contain'}} />
-      </View>
-      <TabBar
-        {...props}
-        indicatorStyle={{backgroundColor: colors.primary}}
-        style={{backgroundColor: colors.background}}
-      />
-    </View>
-  );
+    );
+  };
 
   return (
     <TabView
