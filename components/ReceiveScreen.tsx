@@ -16,34 +16,18 @@ import OptionsMenu from 'react-native-option-menu';
 import RPC from '../app/rpc';
 
 type SingleAddress = {
-  addresses: string[] | null;
-  displayAddress: string;
-  setDisplayAddress: (a: string) => void;
+  address: string;
+  index: number;
+  total: number;
+  prev: () => void;
+  next: () => void;
 };
 
-const SingleAddressDisplay: React.FunctionComponent<SingleAddress> = ({
-  addresses,
-  displayAddress,
-  setDisplayAddress,
-}) => {
-  let [currentAddressIndex, setCurrentAddressIndex] = useState(0);
-
-  let address = 'No Address';
-  if (addresses && addresses.length > 0 && currentAddressIndex < addresses.length) {
-    address = addresses[currentAddressIndex];
-  }
-
-  const multipleAddresses = addresses && addresses.length > 1;
+const SingleAddressDisplay: React.FunctionComponent<SingleAddress> = ({address, index, total, prev, next}) => {
   // console.log(`Addresses ${addresses}: ${multipleAddresses}`);
   const {colors} = useTheme();
 
-  if (addresses) {
-    let displayAddressIndex = addresses?.findIndex(a => a === displayAddress);
-
-    if (currentAddressIndex !== displayAddressIndex && displayAddressIndex >= 0) {
-      setCurrentAddressIndex(displayAddressIndex);
-    }
-  }
+  const multi = total > 1;
 
   const chunks = Utils.splitAddressIntoChunks(address, Utils.isSapling(address) ? 4 : 2);
   const fixedWidthFont = Platform.OS === 'android' ? 'monospace' : 'Courier';
@@ -55,35 +39,18 @@ const SingleAddressDisplay: React.FunctionComponent<SingleAddress> = ({
     }
   };
 
-  const prev = () => {
-    if (addresses) {
-      setDisplayAddress('');
-      let newIndex = currentAddressIndex - 1;
-      if (newIndex < 0) {
-        newIndex = addresses?.length - 1;
-      }
-      setCurrentAddressIndex(newIndex);
-    }
-  };
-
-  const next = () => {
-    if (addresses) {
-      setDisplayAddress('');
-      const newIndex = (currentAddressIndex + 1) % addresses?.length;
-      setCurrentAddressIndex(newIndex);
-    }
-  };
-
-  let addressIndex = '';
-  if (Utils.isSapling(address)) {
-    addressIndex = `m/32'/133'/${currentAddressIndex}`;
-  } else {
-    addressIndex = `m/44'/133'/0'/0/${currentAddressIndex}`;
-  }
+  // let addressIndex = '';
+  // if (Utils.isSapling(address)) {
+  //   addressIndex = `m/32'/133'/${currentAddressIndex}`;
+  // } else {
+  //   addressIndex = `m/44'/133'/0'/0/${currentAddressIndex}`;
+  // }
 
   return (
     <View style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
-      <FadeText style={{marginTop: 10}}>{addressIndex}</FadeText>
+      <FadeText style={{marginTop: 10}}>
+        Address: {index + 1} of {total}
+      </FadeText>
       <View style={{padding: 10, backgroundColor: 'rgb(255, 255, 255)', marginTop: 5}}>
         <QRCode value={address} size={225} ecl="L" />
       </View>
@@ -106,7 +73,7 @@ const SingleAddressDisplay: React.FunctionComponent<SingleAddress> = ({
         Tap To Copy
       </ClickableText>
 
-      {multipleAddresses && (
+      {multi && (
         <View style={{display: 'flex', flexDirection: 'row', marginTop: 10, alignItems: 'center'}}>
           <SecondaryButton title={'Prev'} style={{width: '25%', margin: 10}} onPress={prev} />
           <SecondaryButton title={'Next'} style={{width: '25%', margin: 10}} onPress={next} />
@@ -135,30 +102,110 @@ const ReceiveScreen: React.FunctionComponent<ReceiveScreenProps> = ({
   ]);
 
   const [displayAddress, setDisplayAddress] = useState('');
+  const [zindex, setZIndex] = useState(0);
+  const [tindex, setTIndex] = useState(0);
 
   const {colors} = useTheme();
 
-  const zaddrs = addresses.filter(a => Utils.isSapling(a)) || null;
-  const taddrs = addresses.filter(a => Utils.isTransparent(a)) || null;
+  const zaddrs = addresses.filter(a => Utils.isSapling(a)) || [];
+  const taddrs = addresses.filter(a => Utils.isTransparent(a)) || [];
+
+  if (displayAddress) {
+    let displayAddressIndex = zaddrs?.findIndex(a => a === displayAddress);
+
+    if (zindex !== displayAddressIndex && displayAddressIndex >= 0) {
+      setZIndex(displayAddressIndex);
+    }
+
+    displayAddressIndex = taddrs?.findIndex(a => a === displayAddress);
+
+    if (tindex !== displayAddressIndex && displayAddressIndex >= 0) {
+      setTIndex(displayAddressIndex);
+    }
+  }
+
+  const prev = (type: string) => {
+    setDisplayAddress('');
+
+    if (type === 'z') {
+      if (zaddrs.length === 0) {
+        return;
+      }
+      let newIndex = zindex - 1;
+      if (newIndex < 0) {
+        newIndex = zaddrs.length - 1;
+      }
+      setZIndex(newIndex);
+    } else {
+      if (taddrs.length === 0) {
+        return;
+      }
+      let newIndex = tindex - 1;
+      if (newIndex < 0) {
+        newIndex = taddrs.length - 1;
+      }
+      setTIndex(newIndex);
+    }
+  };
+
+  const next = (type: string) => {
+    setDisplayAddress('');
+    if (type === 'z') {
+      if (zaddrs.length === 0) {
+        return;
+      }
+      const newIndex = (zindex + 1) % zaddrs?.length;
+      setZIndex(newIndex);
+    } else {
+      if (taddrs.length === 0) {
+        return;
+      }
+      const newIndex = (tindex + 1) % taddrs?.length;
+      setTIndex(newIndex);
+    }
+  };
 
   const renderScene: (routes: any) => JSX.Element | undefined = ({route}) => {
     switch (route.key) {
-      case 'zaddr':
+      case 'zaddr': {
+        let zaddr = 'No Address';
+        if (zaddrs.length > 0) {
+          zaddr = zaddrs[zindex];
+        }
         return (
           <SingleAddressDisplay
-            addresses={zaddrs}
-            displayAddress={displayAddress}
-            setDisplayAddress={setDisplayAddress}
+            address={zaddr}
+            index={zindex}
+            total={zaddrs.length}
+            prev={() => {
+              prev('z');
+            }}
+            next={() => {
+              next('z');
+            }}
           />
         );
-      case 'taddr':
+      }
+      case 'taddr': {
+        let taddr = 'No Address';
+        if (taddrs.length > 0) {
+          taddr = taddrs[tindex];
+        }
+
         return (
           <SingleAddressDisplay
-            addresses={taddrs}
-            displayAddress={displayAddress}
-            setDisplayAddress={setDisplayAddress}
+            address={taddr}
+            index={tindex}
+            total={taddrs.length}
+            prev={() => {
+              prev('t');
+            }}
+            next={() => {
+              next('t');
+            }}
           />
         );
+      }
     }
   };
 

@@ -368,6 +368,17 @@ export default class RPC {
     return addrJSON[0];
   }
 
+  static async doImportPrivKey(key: string, birthday: string): Promise<string> {
+    if (isNaN(parseInt(birthday, 10))) {
+      return `Error: Couldn't parse ${birthday} as a number`;
+    }
+
+    const args = {key, birthday: parseInt(birthday, 10)};
+    const address = await RPCModule.execute('import', JSON.stringify(args));
+
+    return address;
+  }
+
   static async fetchSeed(): Promise<WalletSeed> {
     const seedStr = await RPCModule.execute('seed', '');
     const seedJSON = JSON.parse(seedStr);
