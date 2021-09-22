@@ -15,6 +15,7 @@ import {faBars, faEllipsisV} from '@fortawesome/free-solid-svg-icons';
 import OptionsMenu from 'react-native-option-menu';
 import RPC from '../app/rpc';
 import PrivKeyModal from './PrivKeyModal';
+import ImportKeyModal from './ImportKey';
 
 type SingleAddress = {
   address: string;
@@ -49,10 +50,12 @@ const SingleAddressDisplay: React.FunctionComponent<SingleAddress> = ({address, 
 
   return (
     <View style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
-      <FadeText style={{marginTop: 10}}>
-        Address: {index + 1} of {total}
-      </FadeText>
-      <View style={{padding: 10, backgroundColor: 'rgb(255, 255, 255)', marginTop: 5}}>
+      {multi && (
+        <FadeText style={{marginTop: 10}}>
+          Address: {index + 1} of {total}
+        </FadeText>
+      )}
+      <View style={{marginTop: 10, padding: 10, backgroundColor: 'rgb(255, 255, 255)'}}>
         <QRCode value={address} size={225} ecl="L" />
       </View>
       <View style={{display: 'flex', flexDirection: 'row', flexWrap: 'wrap', marginTop: 10, justifyContent: 'center'}}>
@@ -262,6 +265,18 @@ const ReceiveScreen: React.FunctionComponent<ReceiveScreenProps> = ({
     setPrivKey(k);
   };
 
+  const [importKeyModalVisible, setImportKeyModalVisible] = useState(false);
+  const importKey = async () => {
+    setImportKeyModalVisible(true);
+  };
+
+  const doImport = async (key: string, birthday: string) => {
+    Toast.show('Importing ...', Toast.LONG);
+
+    // This is async...
+    RPC.doImportPrivKey(key, birthday);
+  };
+
   const renderTabBar: (props: any) => JSX.Element = props => {
     let address = '';
 
@@ -285,6 +300,15 @@ const ReceiveScreen: React.FunctionComponent<ReceiveScreenProps> = ({
             closeModal={() => setPrivKeyModalVisible(false)}
           />
         </Modal>
+
+        <Modal
+          animationType="slide"
+          transparent={false}
+          visible={importKeyModalVisible}
+          onRequestClose={() => setImportKeyModalVisible(false)}>
+          <ImportKeyModal doImport={doImport} closeModal={() => setImportKeyModalVisible(false)} />
+        </Modal>
+
         <View
           style={{
             display: 'flex',
@@ -300,9 +324,16 @@ const ReceiveScreen: React.FunctionComponent<ReceiveScreenProps> = ({
           <OptionsMenu
             customButton={<FontAwesomeIcon icon={faEllipsisV} color={'#ffffff'} size={20} />}
             buttonStyle={{width: 32, height: 32, margin: 7.5, resizeMode: 'contain'}}
-            destructiveIndex={4}
-            options={['New Z Address', 'New T Address', 'Export Private Key', 'Export Viewing Key', 'Cancel']}
-            actions={[addZ, addT, viewPrivKey, viewViewingKey]}
+            destructiveIndex={5}
+            options={[
+              'New Z Address',
+              'New T Address',
+              'Export Private Key',
+              'Export Viewing Key',
+              'Import...',
+              'Cancel',
+            ]}
+            actions={[addZ, addT, viewPrivKey, viewViewingKey, importKey]}
           />
         </View>
 

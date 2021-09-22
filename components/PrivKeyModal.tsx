@@ -15,12 +15,10 @@ type PrivKeyModalProps = {
 };
 const PrivKeyModal: React.FunctionComponent<PrivKeyModalProps> = ({address, keyType, privKey, closeModal}) => {
   const {colors} = useTheme();
-
-  const keyChunks = Utils.splitStringIntoChunks(privKey, Utils.isSapling(address) ? 10 : 2);
-
   const fixedWidthFont = Platform.OS === 'android' ? 'monospace' : 'Courier';
 
   const keyTypeString = keyType === 0 ? 'Private' : 'Viewing';
+  const keyChunks = Utils.splitStringIntoChunks(privKey, Utils.isSapling(address) ? 10 : 2);
 
   const [expandAddress, setExpandAddress] = useState(false);
 
@@ -34,8 +32,6 @@ const PrivKeyModal: React.FunctionComponent<PrivKeyModalProps> = ({address, keyT
       Toast.show('Copied key to Clipboard', Toast.LONG);
     }
   };
-
-  console.log(`Showing address: ${address}, privKey: ${privKey}`);
 
   return (
     <SafeAreaView
