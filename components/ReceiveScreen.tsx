@@ -92,12 +92,14 @@ type ReceiveScreenProps = {
   addresses: string[];
   toggleMenuDrawer: () => void;
   fetchTotalBalance: () => Promise<void>;
+  startRescan: () => void;
 };
 
 const ReceiveScreen: React.FunctionComponent<ReceiveScreenProps> = ({
   addresses,
   toggleMenuDrawer,
   fetchTotalBalance,
+  startRescan,
 }) => {
   const [index, setIndex] = React.useState(0);
   const [routes] = React.useState([
@@ -271,10 +273,27 @@ const ReceiveScreen: React.FunctionComponent<ReceiveScreenProps> = ({
   };
 
   const doImport = async (key: string, birthday: string) => {
-    Toast.show('Importing ...', Toast.LONG);
+    const addressList = await RPC.doImportPrivKey(key, birthday);
+    console.log(addressList);
 
-    // This is async...
-    RPC.doImportPrivKey(key, birthday);
+    if (typeof addressList === 'string' && addressList.startsWith('Error')) {
+      // Show the toast in settimeout, because it sometimes gets lost.
+      setTimeout(() => {
+        Toast.show(addressList, Toast.LONG);
+      }, 1000);
+      return;
+    }
+
+    let address = '';
+    if (addressList && addressList.length > 0) {
+      address = addressList[0];
+    }
+
+    // Show the toast in settimeout, because it sometimes gets lost.
+    setTimeout(() => {
+      Toast.show(`Importing ${Utils.trimToSmall(address)}`, Toast.LONG);
+    }, 1000);
+    startRescan();
   };
 
   const renderTabBar: (props: any) => JSX.Element = props => {

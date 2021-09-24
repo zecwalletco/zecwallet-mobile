@@ -375,12 +375,12 @@ export default class RPC {
     return addrJSON[0];
   }
 
-  static async doImportPrivKey(key: string, birthday: string): Promise<string> {
+  static async doImportPrivKey(key: string, birthday: string): Promise<string | string[]> {
     if (isNaN(parseInt(birthday, 10))) {
       return `Error: Couldn't parse ${birthday} as a number`;
     }
 
-    const args = {key, birthday: parseInt(birthday, 10)};
+    const args = {key, birthday: parseInt(birthday, 10), norescan: true};
     const address = await RPCModule.execute('import', JSON.stringify(args));
 
     return address;

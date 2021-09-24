@@ -522,7 +522,9 @@ export default class LoadedApp extends Component<LoadedAppProps, AppState> {
             )}
           </Tab.Screen>
           <Tab.Screen name="RECEIVE">
-            {props => <ReceiveScreen {...props} {...standardProps} addresses={addresses} />}
+            {props => (
+              <ReceiveScreen {...props} {...standardProps} addresses={addresses} startRescan={this.startRescan} />
+            )}
           </Tab.Screen>
         </Tab.Navigator>
       </SideMenu>
