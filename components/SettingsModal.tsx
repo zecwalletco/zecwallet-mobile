@@ -59,37 +59,38 @@ const SettingsModal: React.FunctionComponent<SettingsModalProps> = ({
         </View>
 
         <View style={{display: 'flex', marginLeft: 20}}>
-          <View style={{display: 'flex', flexDirection: 'row'}}>
-            <TouchableOpacity
-              style={{marginRight: 10, marginBottom: 10}}
-              onPress={() => set_wallet_option('download_memos', 'none')}>
+          <TouchableOpacity
+            style={{marginRight: 10, marginBottom: 10}}
+            onPress={() => set_wallet_option('download_memos', 'none')}>
+            <View style={{display: 'flex', flexDirection: 'row', marginTop: 20}}>
               <FontAwesomeIcon icon={noneIcon} size={20} color={'#ffffff'} />
-            </TouchableOpacity>
-            <RegText>None</RegText>
-          </View>
+              <RegText style={{marginLeft: 10}}>None</RegText>
+            </View>
+          </TouchableOpacity>
           <FadeText>Don't download any memos. Server will not learn what transactions belong to you.</FadeText>
 
-          <View style={{display: 'flex', flexDirection: 'row', marginTop: 20}}>
-            <TouchableOpacity
-              style={{marginRight: 10, marginBottom: 10}}
-              onPress={() => set_wallet_option('download_memos', 'wallet')}>
+          <TouchableOpacity
+            style={{marginRight: 10, marginBottom: 10}}
+            onPress={() => set_wallet_option('download_memos', 'wallet')}>
+            <View style={{display: 'flex', flexDirection: 'row', marginTop: 20}}>
               <FontAwesomeIcon icon={walletIcon} size={20} color={'#ffffff'} />
-            </TouchableOpacity>
-            <RegText>Wallet</RegText>
-          </View>
+              <RegText style={{marginLeft: 10}}>Wallet</RegText>
+            </View>
+          </TouchableOpacity>
+
           <FadeText>
             Download only my memos. Server will learn what TxIDs belong to you, but can't see the addresses, amounts or
             memos
           </FadeText>
 
-          <View style={{display: 'flex', flexDirection: 'row', marginTop: 20}}>
-            <TouchableOpacity
-              style={{marginRight: 10, marginBottom: 10}}
-              onPress={() => set_wallet_option('download_memos', 'all')}>
+          <TouchableOpacity
+            style={{marginRight: 10, marginBottom: 10}}
+            onPress={() => set_wallet_option('download_memos', 'all')}>
+            <View style={{display: 'flex', flexDirection: 'row', marginTop: 20}}>
               <FontAwesomeIcon icon={allIcon} size={20} color={'#ffffff'} />
-            </TouchableOpacity>
-            <RegText>All</RegText>
-          </View>
+              <RegText style={{marginLeft: 10}}>All</RegText>
+            </View>
+          </TouchableOpacity>
           <FadeText>
             Download all memos in the blockchain. Server will not learn what TxIDs belong to you. This consumes A LOT of
             bandwidth.
