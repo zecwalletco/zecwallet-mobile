@@ -7,6 +7,7 @@ import {
   SendJsonToType,
   WalletSeed,
   SendProgress,
+  WalletSettings,
 } from './AppState';
 import RPCModule from '../components/RPCModule';
 import Utils from './utils';
@@ -19,6 +20,7 @@ export default class RPC {
   fnSetAllAddresses: (allAddresses: string[]) => void;
   fnSetZecPrice: (price: number | null) => void;
   fnRefreshUpdates: (inProgress: boolean, progress: number) => void;
+  fnSetWalletSettings: (settings: WalletSettings) => void;
   refreshTimerID: NodeJS.Timeout | null;
   updateTimerId?: NodeJS.Timeout;
 
@@ -37,6 +39,7 @@ export default class RPC {
     fnSetAddressesWithBalance: (ab: AddressBalance[]) => void,
     fnSetTransactionsList: (txlist: Transaction[]) => void,
     fnSetAllAddresses: (addresses: string[]) => void,
+    fnSetWalletSettings: (settings: WalletSettings) => void,
     fnSetInfo: (info: Info) => void,
     fnSetZecPrice: (price: number | null) => void,
     fnRefreshUpdates: (inProgress: boolean, progress: number) => void,
@@ -45,6 +48,7 @@ export default class RPC {
     this.fnSetAddressesWithBalance = fnSetAddressesWithBalance;
     this.fnSetTransactionsList = fnSetTransactionsList;
     this.fnSetAllAddresses = fnSetAllAddresses;
+    this.fnSetWalletSettings = fnSetWalletSettings;
     this.fnSetInfo = fnSetInfo;
     this.fnSetZecPrice = fnSetZecPrice;
     this.fnRefreshUpdates = fnRefreshUpdates;
@@ -114,6 +118,7 @@ export default class RPC {
     this.fetchTotalBalance();
     this.fetchTandZTransactions();
     this.getZecPrice();
+    this.fetchWalletSettings();
   }
 
   async rescan() {
@@ -233,6 +238,25 @@ export default class RPC {
       // Already at the latest block
       // console.log('Already have latest block, waiting for next refresh');
     }
+  }
+
+  async fetchWalletSettings() {
+    const download_memos_str = await RPCModule.execute('getoption', 'download_memos');
+    const download_memos = JSON.parse(download_memos_str).download_memos;
+
+    // console.log(download_memos);
+
+    const wallet_settings = new WalletSettings();
+    wallet_settings.download_memos = download_memos;
+
+    this.fnSetWalletSettings(wallet_settings);
+  }
+
+  static async setWalletSettingOption(name: string, value: string): Promise<string> {
+    const r = await RPCModule.execute('setoption', `${name}=${value}`);
+
+    // console.log(r);
+    return r;
   }
 
   // Special method to get the Info object. This is used both internally and by the Loading screen
