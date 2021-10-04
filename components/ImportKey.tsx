@@ -11,6 +11,7 @@ type ScannerProps = {
   closeModal: () => void;
 };
 function ScanScreen({setPrivKeyText, closeModal}: ScannerProps) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [error, setError] = useState<String | null>(null);
 
   const validateKey = (scannedKey: string) => {
