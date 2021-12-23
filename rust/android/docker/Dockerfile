@@ -1,17 +1,10 @@
 FROM stunnar/rustndk:latest
 
+# install needed libaries
 RUN apt-get update 
 RUN apt-get install -y curl wget gcc make automake build-essential
 
-# RUN curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain none -y
-# ENV PATH=/root/.cargo/bin:/opt/android-ndk-linux/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH
-
-# RUN rustup target add i686-linux-android
-# RUN rustup target add armv7-linux-androideabi
-# RUN rustup target add aarch64-linux-android
-
-# change this if the ndk updates
-
+# make open ssl 3.0.1 for targets
 RUN cd /opt && wget https://www.openssl.org/source/openssl-3.0.1.tar.gz && \
     tar xvf openssl-3.0.1.tar.gz && cd openssl-3.0.1 && \
     mkdir x86 && mkdir aarch64 && mkdir armv7
@@ -31,16 +24,19 @@ RUN cd /opt/openssl-3.0.1 && \
     make -j$(nproc) && make -j$(nproc) install && \
     make clean && make distclean
 
+
+# build zecwalletmobile
 RUN rustup component add rustfmt
 
 RUN apt-get install -y git
-
 RUN cd /opt && git clone --depth=1 https://github.com/zecwalletco/zecwallet-mobile zecwalletmobile && cd zecwalletmobile/rust/android && cargo fetch && cargo build --release && rm -rf /opt/zecwalletmobile
 
+# install various other needed libs
 RUN apt-get install --assume-yes --no-install-recommends \
     g++-aarch64-linux-gnu \
     libc6-dev-arm64-cross
 
+# configure target build settings
 RUN rustup target install aarch64-linux-android
 RUN echo "[target.aarch64-linux-android]" >> /usr/local/cargo/config
 RUN echo "ar = \"llvm-ar\"" >> /usr/local/cargo/config
