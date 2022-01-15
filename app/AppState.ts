@@ -193,9 +193,11 @@ export interface SyncStatus {
 
 export class WalletSettings {
   download_memos: string;
+  hideTotal: boolean;
 
   constructor() {
     this.download_memos = 'wallet';
+    this.hideTotal = false;
   }
 }
 

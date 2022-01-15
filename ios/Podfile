@@ -17,6 +17,8 @@ target 'ZecwalletMobile' do
     :hermes_enabled => false
   )
 
+  pod 'react-native-blur', :path => '../node_modules/@react-native-community/blur'
+
   target 'ZecwalletMobileTests' do
     inherit! :complete
     # Pods for testing
