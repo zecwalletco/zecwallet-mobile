@@ -22,6 +22,7 @@ import {
   Clipboard,
   Linking,
 } from 'react-native';
+import { BlurView } from "@react-native-community/blur";
 import Toast from 'react-native-simple-toast';
 import {TotalBalance, Transaction, Info, SyncStatus} from '../app/AppState';
 import Utils from '../app/utils';
@@ -31,6 +32,8 @@ import {useTheme} from '@react-navigation/native';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {faArrowDown, faArrowUp, faBars, faChevronLeft} from '@fortawesome/free-solid-svg-icons';
 import RPC from '../app/rpc';
+
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type TxDetailProps = {
   tx: Transaction | null;
@@ -90,6 +93,7 @@ const TxDetail: React.FunctionComponent<TxDetailProps> = ({tx, closeModal}) => {
           </RegText>
           <ZecAmount size={36} amtZec={tx?.amount} />
           <UsdAmount amtZec={tx?.amount} price={tx?.zec_price} />
+          
         </View>
 
         <View style={{margin: 10}}>
@@ -306,11 +310,24 @@ const TransactionsScreenView: React.FunctionComponent<TransactionsScreenViewProp
   doRefresh,
   setComputingModalVisible,
 }) => {
+
   const [isTxDetailModalShowing, setTxDetailModalShowing] = React.useState(false);
   const [txDetail, setTxDetail] = React.useState<Transaction | null>(null);
 
   const [numTx, setNumTx] = React.useState<number>(100);
   const loadMoreButton = numTx < (transactions?.length || 0);
+
+  const [isTxhidden, setTxvisability] = React.useState(false);
+
+  const switchTxHidden = async () => {
+    setTxvisability(!isTxhidden)
+    await AsyncStorage.setItem('isTxhidden', isTxhidden? '0':'1');
+  }
+
+  const getStateOfTxhidden = async () => {
+    setTxvisability(await AsyncStorage.getItem('isTxhidden') == '1')
+  }
+  getStateOfTxhidden().then();
 
   const loadMoreClicked = () => {
     setNumTx(numTx + 100);
@@ -337,6 +354,7 @@ const TransactionsScreenView: React.FunctionComponent<TransactionsScreenViewProp
   const {colors} = useTheme();
   const zecPrice = info ? info.zecPrice : null;
 
+
   const syncStatusDisplay = syncingStatus?.inProgress ? `Syncing ${syncingStatus?.progress.toFixed(2)}%` : 'Balance';
 
   const balanceColor = transactions?.find(t => t.confirmations === 0) ? colors.primary : colors.text;
@@ -352,18 +370,56 @@ const TransactionsScreenView: React.FunctionComponent<TransactionsScreenViewProp
         <TxDetail tx={txDetail} closeModal={() => setTxDetailModalShowing(false)} />
       </Modal>
 
-      <View
-        style={{display: 'flex', alignItems: 'center', paddingBottom: 25, backgroundColor: colors.card, zIndex: -1}}>
-        <RegText style={{marginTop: 5, padding: 5}}>{syncStatusDisplay}</RegText>
-        <ZecAmount color={balanceColor} size={36} amtZec={totalBalance.total} />
-        <UsdAmount style={{marginTop: 5}} price={zecPrice} amtZec={totalBalance.total} />
+        <View
+          style={{
+            display: 'flex', 
+            alignItems: 'center',
+             paddingTop:12 , 
+             paddingBottom: 12, 
+             backgroundColor: colors.card, 
+             zIndex: -1,
+             borderBottomLeftRadius:10,
+             borderBottomRightRadius:10
+             }}>
+         
+        
+         <TouchableOpacity
+                onPress={() => switchTxHidden()}
+              >
+            <View style={{display: 'flex', flexDirection:'column', alignItems: 'center'}}>
+              <RegText style={{marginTop: 5, padding: 5}}>{syncStatusDisplay}</RegText>
+              <ZecAmount color={balanceColor} size={36} amtZec={totalBalance.total} />
+              <UsdAmount style={{marginTop: 5}} price={zecPrice} amtZec={totalBalance.total} />
+              {showShieldButton && (
+                <View style={{margin: 5}}>
+                  <PrimaryButton title="Shield funds" onPress={shieldFunds} />
+                </View>
+              )}
 
-        {showShieldButton && (
-          <View style={{margin: 5}}>
-            <PrimaryButton title="Shield funds" onPress={shieldFunds} />
-          </View>
-        )}
-      </View>
+                { 
+                  isTxhidden &&
+                <BlurView
+                  style={{
+                    display:"flex",
+                    alignItems:'center',
+                    justifyContent:'center',
+                    borderRadius:25,
+                    position: "absolute",
+                  top: 0,
+                  left: 0,
+                  bottom: 0,
+                  right: 0}}
+                  blurAmount={1}
+                  >
+                    
+                    <Image source={require('../assets/img/eye-slash.png')} style={{width: 50, height: 50, resizeMode: 'contain'}} />
+                  </BlurView>
+                  }
+            </View>
+          </TouchableOpacity>
+
+
+        </View>
 
       <View style={{backgroundColor: '#353535', padding: 10, position: 'absolute'}}>
         <TouchableOpacity onPress={toggleMenuDrawer}>
@@ -371,9 +427,9 @@ const TransactionsScreenView: React.FunctionComponent<TransactionsScreenViewProp
         </TouchableOpacity>
       </View>
 
-      <View style={{display: 'flex', alignItems: 'center', marginTop: -25}}>
+      {/* <View style={{display: 'flex', alignItems: 'center', marginTop: -25}}>
         <Image source={require('../assets/img/logobig.png')} style={{width: 50, height: 50, resizeMode: 'contain'}} />
-      </View>
+      </View> */}
       <ScrollView
         refreshControl={
           <RefreshControl refreshing={false} onRefresh={doRefresh} tintColor={colors.text} title="Refreshing" />

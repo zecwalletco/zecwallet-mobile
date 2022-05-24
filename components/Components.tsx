@@ -1,6 +1,6 @@
 /* eslint-disable react-native/no-inline-styles */
 import React, {useState, useEffect} from 'react';
-import {TouchableOpacity, Text, TextInput, View, Platform} from 'react-native';
+import {TouchableOpacity, Text, TextInput, View, Platform, Image} from 'react-native';
 import {useTheme} from '@react-navigation/native';
 import Utils from '../app/utils';
 

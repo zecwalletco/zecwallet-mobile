@@ -9,7 +9,7 @@ type DetailLineProps = {
   label: string;
   value?: string | number;
 };
-const DetailLine: React.FunctionComponent<DetailLineProps> = ({label, value}) => {
+const DetailLine: React.FunctionComponent<DetailLineProps> = ({label, value,}) => {
   return (
     <View style={{display: 'flex', marginTop: 20}}>
       <FadeText>{label}</FadeText>
