@@ -2703,7 +2703,7 @@ dependencies = [
 [[package]]
 name = "zecwalletlitelib"
 version = "0.1.0"
-source = "git+https://github.com/adityapk00/zecwallet-light-cli?rev=b9d27feedc68156379675e9d608d60a6dbae6d81#b9d27feedc68156379675e9d608d60a6dbae6d81"
+source = "git+https://github.com/adityapk00/zecwallet-light-cli?rev=1d033cd8a017e0d488c57954bebd822753879f11#1d033cd8a017e0d488c57954bebd822753879f11"
 dependencies = [
  "arr_macro",
  "base58",
