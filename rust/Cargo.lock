@@ -599,7 +599,7 @@ dependencies = [
 [[package]]
 name = "equihash"
 version = "0.1.0"
-source = "git+https://github.com/adityapk00/librustzcash?rev=adeb3ec4ad15480482bc2962bc9fe453814db9ee#adeb3ec4ad15480482bc2962bc9fe453814db9ee"
+source = "git+https://github.com/adityapk00/librustzcash?rev=b70edf39e26e4c687b5087daf2ffd40f99fffd67#b70edf39e26e4c687b5087daf2ffd40f99fffd67"
 dependencies = [
  "blake2b_simd",
  "byteorder",
@@ -2635,7 +2635,7 @@ dependencies = [
 [[package]]
 name = "zcash_client_backend"
 version = "0.5.0"
-source = "git+https://github.com/adityapk00/librustzcash?rev=adeb3ec4ad15480482bc2962bc9fe453814db9ee#adeb3ec4ad15480482bc2962bc9fe453814db9ee"
+source = "git+https://github.com/adityapk00/librustzcash?rev=b70edf39e26e4c687b5087daf2ffd40f99fffd67#b70edf39e26e4c687b5087daf2ffd40f99fffd67"
 dependencies = [
  "base64 0.13.0",
  "bech32",
@@ -2658,7 +2658,7 @@ dependencies = [
 [[package]]
 name = "zcash_primitives"
 version = "0.5.0"
-source = "git+https://github.com/adityapk00/librustzcash?rev=adeb3ec4ad15480482bc2962bc9fe453814db9ee#adeb3ec4ad15480482bc2962bc9fe453814db9ee"
+source = "git+https://github.com/adityapk00/librustzcash?rev=b70edf39e26e4c687b5087daf2ffd40f99fffd67#b70edf39e26e4c687b5087daf2ffd40f99fffd67"
 dependencies = [
  "aes",
  "bitvec 0.18.5",
@@ -2687,7 +2687,7 @@ dependencies = [
 [[package]]
 name = "zcash_proofs"
 version = "0.5.0"
-source = "git+https://github.com/adityapk00/librustzcash?rev=adeb3ec4ad15480482bc2962bc9fe453814db9ee#adeb3ec4ad15480482bc2962bc9fe453814db9ee"
+source = "git+https://github.com/adityapk00/librustzcash?rev=b70edf39e26e4c687b5087daf2ffd40f99fffd67#b70edf39e26e4c687b5087daf2ffd40f99fffd67"
 dependencies = [
  "bellman",
  "blake2b_simd",
@@ -2705,7 +2705,7 @@ dependencies = [
 [[package]]
 name = "zecwalletlitelib"
 version = "0.1.0"
-source = "git+https://github.com/adityapk00/zecwallet-light-cli?rev=657024be8473fb5f821f3a01d96e30341f0f6a0a#657024be8473fb5f821f3a01d96e30341f0f6a0a"
+source = "git+https://github.com/adityapk00/zecwallet-light-cli?rev=1aac5b589f85e234346f978cbc4adbdca47ec7dd#1aac5b589f85e234346f978cbc4adbdca47ec7dd"
 dependencies = [
  "arr_macro",
  "base58",
