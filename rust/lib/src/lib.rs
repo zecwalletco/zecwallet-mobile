@@ -8,12 +8,13 @@ use base64::{decode, encode};
 
 use zecwalletlitelib::lightclient::lightclient_config::LightClientConfig;
 use zecwalletlitelib::{commands, lightclient::LightClient};
+use zecwalletlitelib::MainNetwork;
 
 // We'll use a MUTEX to store a global lightclient instance,
 // so we don't have to keep creating it. We need to store it here, in rust
 // because we can't return such a complex structure back to JS
 lazy_static! {
-    static ref LIGHTCLIENT: Mutex<RefCell<Option<Arc<LightClient>>>> =
+    static ref LIGHTCLIENT: Mutex<RefCell<Option<Arc<LightClient<MainNetwork>>>>> =
         Mutex::new(RefCell::new(None));
 }
 pub fn init_new(
@@ -22,8 +23,8 @@ pub fn init_new(
     sapling_spend_b64: String,
     data_dir: String,
 ) -> String {
-    let server = LightClientConfig::get_server_or_default(Some(server_uri));
-    let (mut config, latest_block_height) = match LightClientConfig::create(server) {
+    let server = LightClientConfig::<MainNetwork>::get_server_or_default(Some(server_uri));
+    let (mut config, latest_block_height) = match LightClientConfig::create(MainNetwork, server) {
         Ok((c, h)) => (c, h),
         Err(e) => {
             return format!("Error: {}", e);
@@ -70,8 +71,8 @@ pub fn init_from_seed(
     sapling_spend_b64: String,
     data_dir: String,
 ) -> String {
-    let server = LightClientConfig::get_server_or_default(Some(server_uri));
-    let (mut config, _latest_block_height) = match LightClientConfig::create(server) {
+    let server = LightClientConfig::<MainNetwork>::get_server_or_default(Some(server_uri));
+    let (mut config, _latest_block_height) = match LightClientConfig::create(MainNetwork, server) {
         Ok((c, h)) => (c, h),
         Err(e) => {
             return format!("Error: {}", e);
@@ -117,8 +118,8 @@ pub fn init_from_b64(
     sapling_spend_b64: String,
     data_dir: String,
 ) -> String {
-    let server = LightClientConfig::get_server_or_default(Some(server_uri));
-    let (mut config, _latest_block_height) = match LightClientConfig::create(server) {
+    let server = LightClientConfig::<MainNetwork>::get_server_or_default(Some(server_uri));
+    let (mut config, _latest_block_height) = match LightClientConfig::create(MainNetwork, server) {
         Ok((c, h)) => (c, h),
         Err(e) => {
             return format!("Error: {}", e);
@@ -166,7 +167,7 @@ pub fn init_from_b64(
 
 pub fn save_to_b64() -> String {
     // Return the wallet as a base64 encoded string
-    let lightclient: Arc<LightClient>;
+    let lightclient: Arc<LightClient<MainNetwork>>;
     {
         let lc = LIGHTCLIENT.lock().unwrap();
 
@@ -188,7 +189,7 @@ pub fn save_to_b64() -> String {
 pub fn execute(cmd: String, args_list: String) -> String {
     let resp: String;
     {
-        let lightclient: Arc<LightClient>;
+        let lightclient: Arc<LightClient<MainNetwork>>;
         {
             let lc = LIGHTCLIENT.lock().unwrap();
 
