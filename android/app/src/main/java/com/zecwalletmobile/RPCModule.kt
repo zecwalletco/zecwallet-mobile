@@ -99,6 +99,8 @@ class RPCModule internal constructor(private val reactContext: ReactApplicationC
 
     @ReactMethod
     fun loadExistingWallet(promise: Promise) {
+        // initlogging()
+
         // Read the file
         val file = MainApplication.getAppContext()!!.openFileInput("wallet.dat")
         val fileBytes = file.readBytes()
@@ -118,8 +120,6 @@ class RPCModule internal constructor(private val reactContext: ReactApplicationC
             reactContext.applicationContext.filesDir.absolutePath)
 
         // Log.w("MAIN", seed)
-        initlogging()
-
         file.close()
 
         promise.resolve(seed)

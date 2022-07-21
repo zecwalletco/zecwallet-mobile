@@ -1,6 +1,6 @@
 {
   "name": "ZecwalletMobile",
-  "version": "1.7.12",
+  "version": "1.7.20",
   "private": true,
   "scripts": {
     "android": "react-native run-android",
