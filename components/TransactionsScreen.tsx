@@ -44,9 +44,9 @@ const TxDetail: React.FunctionComponent<TxDetailProps> = ({tx, closeModal}) => {
   const [expandTxid, setExpandTxid] = useState(false);
 
   const fee =
-    tx?.type === 'sent' &&
-    tx?.amount &&
-    Math.abs(tx?.amount) - Math.abs(tx?.detailedTxns?.reduce((s, d) => s + d.amount, 0));
+    tx?.type === 'sent' && tx?.amount
+      ? Math.abs(tx?.amount) - Math.abs(tx?.detailedTxns?.reduce((s, d) => s + d.amount, 0))
+      : 0;
 
   const handleTxIDClick = (txid?: string) => {
     if (!txid) {
@@ -189,7 +189,7 @@ const TxDetail: React.FunctionComponent<TxDetailProps> = ({tx, closeModal}) => {
             );
           })}
 
-          {fee && (
+          {fee > 0 && (
             <View style={{display: 'flex', marginTop: 10}}>
               <FadeText>Tx Fee</FadeText>
               <View style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-between'}}>
@@ -316,7 +316,7 @@ const TransactionsScreenView: React.FunctionComponent<TransactionsScreenViewProp
     setNumTx(numTx + 100);
   };
 
-  const showShieldButton = totalBalance && totalBalance.transparentBal > 0;
+  const showShieldButton = totalBalance && totalBalance.transparent > 0;
   const shieldFunds = async () => {
     setComputingModalVisible(true);
 

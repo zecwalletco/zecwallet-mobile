@@ -1,20 +1,38 @@
+export enum AddressType {
+  transparent,
+  sapling,
+  unified,
+}
+
 export class TotalBalance {
   // Total t address, confirmed and spendable
-  transparentBal: number;
+  transparent: number;
+
+  // Total orchard balance
+  uabalance: number;
 
   // Total private, confirmed + unconfirmed
-  privateBal: number;
+  zbalance: number;
 
-  // Total private, confirmed funds that are spendable
-  spendablePrivate: number;
+  // Total private, confirmed funds that have been verified
+  verifiedZ: number;
+
+  // Total private that are waiting for confirmation
+  unverifiedZ: number;
+
+  // Total private funds that are spendable
+  spendableZ: number;
 
   // Total unconfirmed + spendable
   total: number;
 
   constructor() {
-    this.transparentBal = 0;
-    this.privateBal = 0;
-    this.spendablePrivate = 0;
+    this.uabalance = 0;
+    this.zbalance = 0;
+    this.transparent = 0;
+    this.verifiedZ = 0;
+    this.unverifiedZ = 0;
+    this.spendableZ = 0;
     this.total = 0;
   }
 }
@@ -193,9 +211,25 @@ export interface SyncStatus {
 
 export class WalletSettings {
   download_memos: string;
+  spam_filter_threshold: number;
 
   constructor() {
     this.download_memos = 'wallet';
+    this.spam_filter_threshold = 0;
+  }
+}
+
+export class AddressDetail {
+  address: string;
+  type: AddressType;
+  account?: number;
+  diversifier?: number;
+
+  constructor(address: string, type: AddressType, account?: number, diversifier?: number) {
+    this.address = address;
+    this.type = type;
+    this.account = account;
+    this.diversifier = diversifier;
   }
 }
 
@@ -213,7 +247,7 @@ export default interface AppState {
 
   // List of all addresses in the wallet, including change addresses and addresses
   // that don't have any balance or are unused
-  addresses: string[];
+  addresses: AddressDetail[];
 
   // List of Address / Label pairs
   addressBook: AddressBookEntry[];

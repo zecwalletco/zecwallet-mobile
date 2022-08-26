@@ -5,7 +5,7 @@ import QRCode from 'react-native-qrcode-svg';
 import {TabView, TabBar} from 'react-native-tab-view';
 import Toast from 'react-native-simple-toast';
 import {ClickableText, FadeText, SecondaryButton} from '../components/Components';
-import {Info} from '../app/AppState';
+import {AddressDetail, AddressType, Info} from '../app/AppState';
 import Utils from '../app/utils';
 import {useTheme} from '@react-navigation/native';
 import {TouchableOpacity} from 'react-native-gesture-handler';
@@ -31,7 +31,7 @@ const SingleAddressDisplay: React.FunctionComponent<SingleAddress> = ({address, 
 
   const multi = total > 1;
 
-  const chunks = Utils.splitStringIntoChunks(address, Utils.isSapling(address) ? 3 : 2);
+  const chunks = Utils.splitStringIntoChunks(address, Utils.isUnified(address) ? 4 : Utils.isSapling(address) ? 3 : 2);
   const fixedWidthFont = Platform.OS === 'android' ? 'monospace' : 'Courier';
 
   const doCopy = () => {
@@ -96,7 +96,7 @@ const SingleAddressDisplay: React.FunctionComponent<SingleAddress> = ({address, 
 
 type ReceiveScreenProps = {
   info: Info | null;
-  addresses: string[];
+  addresses: AddressDetail[];
   toggleMenuDrawer: () => void;
   fetchTotalBalance: () => Promise<void>;
   startRescan: () => void;
@@ -112,25 +112,28 @@ const ReceiveScreen: React.FunctionComponent<ReceiveScreenProps> = ({
   const [routes] = React.useState([
     {key: 'zaddr', title: 'Z Address'},
     {key: 'taddr', title: 'T Address'},
+    {key: 'uaddr', title: 'UA Address'},
   ]);
 
   const [displayAddress, setDisplayAddress] = useState('');
+  const [uindex, setUIndex] = useState(0);
   const [zindex, setZIndex] = useState(0);
   const [tindex, setTIndex] = useState(0);
 
   const {colors} = useTheme();
 
-  const zaddrs = addresses.filter(a => Utils.isSapling(a)) || [];
-  const taddrs = addresses.filter(a => Utils.isTransparent(a)) || [];
+  const uaddrs = addresses.filter(a => Utils.isUnified(a.address)) || [];
+  const zaddrs = addresses.filter(a => Utils.isSapling(a.address)) || [];
+  const taddrs = addresses.filter(a => Utils.isTransparent(a.address)) || [];
 
   if (displayAddress) {
-    let displayAddressIndex = zaddrs?.findIndex(a => a === displayAddress);
+    let displayAddressIndex = zaddrs?.findIndex(a => a.address === displayAddress);
 
     if (zindex !== displayAddressIndex && displayAddressIndex >= 0) {
       setZIndex(displayAddressIndex);
     }
 
-    displayAddressIndex = taddrs?.findIndex(a => a === displayAddress);
+    displayAddressIndex = taddrs?.findIndex(a => a.address === displayAddress);
 
     if (tindex !== displayAddressIndex && displayAddressIndex >= 0) {
       setTIndex(displayAddressIndex);
@@ -163,7 +166,13 @@ const ReceiveScreen: React.FunctionComponent<ReceiveScreenProps> = ({
 
   const next = (type: string) => {
     setDisplayAddress('');
-    if (type === 'z') {
+    if (type === 'u') {
+      if (uaddrs.length === 0) {
+        return;
+      }
+      const newIndex = (uindex + 1) % uaddrs?.length;
+      setUIndex(newIndex);
+    } else if (type === 'z') {
       if (zaddrs.length === 0) {
         return;
       }
@@ -180,10 +189,29 @@ const ReceiveScreen: React.FunctionComponent<ReceiveScreenProps> = ({
 
   const renderScene: (routes: any) => JSX.Element | undefined = ({route}) => {
     switch (route.key) {
+      case 'uaddr': {
+        let uaddr = 'No Address';
+        if (uaddrs.length > 0) {
+          uaddr = uaddrs[zindex].address;
+        }
+        return (
+          <SingleAddressDisplay
+            address={uaddr}
+            index={uindex}
+            total={uaddrs.length}
+            prev={() => {
+              prev('z');
+            }}
+            next={() => {
+              next('z');
+            }}
+          />
+        );
+      }
       case 'zaddr': {
         let zaddr = 'No Address';
         if (zaddrs.length > 0) {
-          zaddr = zaddrs[zindex];
+          zaddr = zaddrs[zindex].address;
         }
         return (
           <SingleAddressDisplay
@@ -202,7 +230,7 @@ const ReceiveScreen: React.FunctionComponent<ReceiveScreenProps> = ({
       case 'taddr': {
         let taddr = 'No Address';
         if (taddrs.length > 0) {
-          taddr = taddrs[tindex];
+          taddr = taddrs[tindex].address;
         }
 
         return (
@@ -224,7 +252,7 @@ const ReceiveScreen: React.FunctionComponent<ReceiveScreenProps> = ({
 
   const addZ = async () => {
     console.log('New Z');
-    const newAddress = await RPC.createNewAddress(true);
+    const newAddress = await RPC.createNewAddress(AddressType.sapling);
     await fetchTotalBalance();
     setIndex(0);
     setDisplayAddress(newAddress);
@@ -232,9 +260,17 @@ const ReceiveScreen: React.FunctionComponent<ReceiveScreenProps> = ({
 
   const addT = async () => {
     console.log('New T');
-    const newAddress = await RPC.createNewAddress(false);
+    const newAddress = await RPC.createNewAddress(AddressType.transparent);
     await fetchTotalBalance();
     setIndex(1);
+    setDisplayAddress(newAddress);
+  };
+
+  const addU = async () => {
+    console.log('New U');
+    const newAddress = await RPC.createNewAddress(AddressType.unified);
+    await fetchTotalBalance();
+    setIndex(2);
     setDisplayAddress(newAddress);
   };
 
@@ -243,12 +279,18 @@ const ReceiveScreen: React.FunctionComponent<ReceiveScreenProps> = ({
   const [privKey, setPrivKey] = useState('');
 
   const viewPrivKey = async () => {
-    if (zaddrs.length === 0 || taddrs.length === 0) {
+    if (uaddrs.length === 0 || zaddrs.length === 0 || taddrs.length === 0) {
       return;
     }
 
-    const address = index === 0 ? zaddrs[zindex] : taddrs[tindex];
-    const k = await RPC.getPrivKeyAsString(address);
+    if (index === 2) {
+      // No viewing key for T address
+      Toast.show('UA addresses do not have private keys', Toast.LONG);
+      return;
+    }
+
+    const address = index === 1 ? zaddrs[zindex] : taddrs[tindex];
+    const k = await RPC.getPrivKeyAsString(address.address);
 
     setKeyType(0);
     setPrivKeyModalVisible(true);
@@ -262,12 +304,18 @@ const ReceiveScreen: React.FunctionComponent<ReceiveScreenProps> = ({
       return;
     }
 
+    if (index === 2) {
+      // No viewing key for T address
+      Toast.show('UA addresses do not have viewing keys', Toast.LONG);
+      return;
+    }
+
     if (zaddrs.length === 0 || taddrs.length === 0) {
       return;
     }
 
     const address = index === 0 ? zaddrs[zindex] : taddrs[tindex];
-    const k = await RPC.getViewKeyAsString(address);
+    const k = await RPC.getViewKeyAsString(address.address);
 
     setKeyType(1);
     setPrivKeyModalVisible(true);
@@ -306,9 +354,11 @@ const ReceiveScreen: React.FunctionComponent<ReceiveScreenProps> = ({
     let address = '';
 
     if (index === 0 && zaddrs.length > 0) {
-      address = zaddrs[zindex];
+      address = zaddrs[zindex].address;
     } else if (index === 1 && taddrs.length > 0) {
-      address = taddrs[tindex];
+      address = taddrs[tindex].address;
+    } else if (index === 2 && uaddrs.length > 0) {
+      address = uaddrs[uindex].address;
     }
 
     return (
@@ -351,6 +401,7 @@ const ReceiveScreen: React.FunctionComponent<ReceiveScreenProps> = ({
             buttonStyle={{width: 32, height: 32, margin: 7.5, resizeMode: 'contain'}}
             destructiveIndex={5}
             options={[
+              'New UA Address',
               'New Z Address',
               'New T Address',
               'Export Private Key',
@@ -358,7 +409,7 @@ const ReceiveScreen: React.FunctionComponent<ReceiveScreenProps> = ({
               'Import...',
               'Cancel',
             ]}
-            actions={[addZ, addT, viewPrivKey, viewViewingKey, importKey]}
+            actions={[addU, addZ, addT, viewPrivKey, viewViewingKey, importKey]}
           />
         </View>
 

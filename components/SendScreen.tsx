@@ -42,7 +42,7 @@ function ScanScreen({idx, updateToField, closeModal}: ScannerProps) {
   const [error, setError] = useState<String | null>(null);
 
   const validateAddress = (scannedAddress: string) => {
-    if (Utils.isSapling(scannedAddress) || Utils.isTransparent(scannedAddress)) {
+    if (Utils.isUnified(scannedAddress) || Utils.isSapling(scannedAddress) || Utils.isTransparent(scannedAddress)) {
       updateToField(idx, scannedAddress, null, null, null);
       closeModal();
     } else {
@@ -101,6 +101,7 @@ function ScanScreen({idx, updateToField, closeModal}: ScannerProps) {
 
 type ConfirmModalProps = {
   sendPageState: SendPageState;
+  totalBalance: TotalBalance;
   defaultFee: number;
   price?: number | null;
   closeModal: () => void;
@@ -110,6 +111,7 @@ const ConfirmModalContent: React.FunctionComponent<ConfirmModalProps> = ({
   closeModal,
   confirmSend,
   sendPageState,
+  totalBalance,
   price,
   defaultFee,
 }) => {
@@ -117,6 +119,28 @@ const ConfirmModalContent: React.FunctionComponent<ConfirmModalProps> = ({
 
   const sendingTotal =
     sendPageState.toaddrs.reduce((s, t) => s + Utils.parseLocaleFloat(t.amount || '0'), 0.0) + defaultFee;
+
+  // Determine the tx privacy level
+  let privacyLevel = '';
+  // 1. If we're sending to a t-address, it is "transparent"
+  const isToTransparent = sendPageState.toaddrs.map(to => Utils.isTransparent(to.to)).reduce((p, c) => p || c, false);
+  if (isToTransparent) {
+    privacyLevel = 'Transparent';
+  } else {
+    // 2. If we're sending to sapling or orchard, and don't have enough funds in the pool, it is "AmountsRevealed"
+    const toSapling = sendPageState.toaddrs
+      .map(to => (Utils.isSapling(to.to) ? parseFloat(to.amount) : 0))
+      .reduce((s, c) => s + c, 0);
+    const toOrchard = sendPageState.toaddrs
+      .map(to => (Utils.isUnified(to.to) ? parseFloat(to.amount) : 0))
+      .reduce((s, c) => s + c, 0);
+    if (toSapling > totalBalance.spendableZ || toOrchard > totalBalance.uabalance) {
+      privacyLevel = 'AmountsRevealed';
+    } else {
+      // Else, it is a shielded transaction
+      privacyLevel = 'Shielded';
+    }
+  }
 
   return (
     <SafeAreaView
@@ -178,6 +202,13 @@ const ConfirmModalContent: React.FunctionComponent<ConfirmModalProps> = ({
             <UsdAmount style={{fontSize: 18}} amtZec={defaultFee} price={price} />
           </View>
         </View>
+        <View style={{margin: 10}}>
+          <FadeText>Privacy Level</FadeText>
+          <View
+            style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline'}}>
+            <RegText>{privacyLevel}</RegText>
+          </View>
+        </View>
       </ScrollView>
 
       <View
@@ -201,7 +232,7 @@ type SendScreenProps = {
   totalBalance: TotalBalance;
   sendPageState: SendPageState;
   setSendPageState: (sendPageState: SendPageState) => void;
-  sendTransaction: (setSendProgress: (arg0: SendProgress | null) => void) => void;
+  sendTransaction:  (setSendProgress: (arg0: SendProgress | null) => void) => Promise<String>;
   clearToAddrs: () => void;
   navigation: NavigationScreenProp<any>;
   toggleMenuDrawer: () => void;
@@ -339,6 +370,8 @@ const SendScreen: React.FunctionComponent<SendScreenProps> = ({
     setTimeout(async () => {
       try {
         const txid = await sendTransaction(setSendProgress);
+        console.log(txid);
+
         setComputingModalVisible(false);
 
         // Clear the fields
@@ -359,7 +392,7 @@ const SendScreen: React.FunctionComponent<SendScreenProps> = ({
     });
   };
 
-  const spendable = totalBalance.transparentBal + totalBalance.spendablePrivate;
+  const spendable = totalBalance.transparent + totalBalance.spendableZ + totalBalance.uabalance;
   const stillConfirming = spendable !== totalBalance.total;
 
   const setMaxAmount = (idx: number) => {
@@ -378,12 +411,12 @@ const SendScreen: React.FunctionComponent<SendScreenProps> = ({
     return max;
   };
 
-  const memoEnabled = Utils.isSapling(sendPageState.toaddrs[0].to);
+  const memoEnabled = Utils.isSapling(sendPageState.toaddrs[0].to) || Utils.isUnified(sendPageState.toaddrs[0].to);
   const zecPrice = info ? info.zecPrice : null;
 
   var addressValidationState: number[] = sendPageState.toaddrs.map(to => {
     if (to.to !== '') {
-      if (Utils.isSapling(to.to) || Utils.isTransparent(to.to)) {
+      if (Utils.isUnified(to.to) || Utils.isSapling(to.to) || Utils.isTransparent(to.to)) {
         return 1;
       } else {
         return -1;
@@ -440,6 +473,7 @@ const SendScreen: React.FunctionComponent<SendScreenProps> = ({
         visible={confirmModalVisible}
         onRequestClose={() => setConfirmModalVisible(false)}>
         <ConfirmModalContent
+          totalBalance={totalBalance}
           sendPageState={sendPageState}
           defaultFee={defaultFee}
           price={info?.zecPrice}
@@ -507,7 +541,7 @@ const SendScreen: React.FunctionComponent<SendScreenProps> = ({
                   borderBottomWidth: 2,
                 }}>
                 <RegTextInput
-                  placeholder="z-address or t-address"
+                  placeholder="U | Z | T address"
                   placeholderTextColor="#777777"
                   style={{flexGrow: 1, maxWidth: '90%'}}
                   value={ta.to}

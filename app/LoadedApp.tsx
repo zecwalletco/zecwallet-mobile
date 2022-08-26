@@ -21,6 +21,8 @@ import AppState, {
   SyncStatus,
   SendProgress,
   WalletSettings,
+  AddressDetail,
+  AddressType,
 } from './AppState';
 import {RegText, FadeText} from '../components/Components';
 import Utils from './utils';
@@ -106,7 +108,7 @@ const ComputingTxModalContent: React.FunctionComponent<ComputingModalProps> = ({
           <RegText style={{marginBottom: 20}}>{`ETA ${progress.etaSeconds}s`}</RegText>
           <Progress.Circle
             showsText={true}
-            progress={progress.progress / progress.total}
+            progress={progress.total ? progress.progress / progress.total : 0}
             indeterminate={!progress.progress}
             size={100}
           />
@@ -261,7 +263,7 @@ export default class LoadedApp extends Component<LoadedAppProps, AppState> {
     this.setState({transactions});
   };
 
-  setAllAddresses = (addresses: string[]) => {
+  setAllAddresses = (addresses: AddressDetail[]) => {
     this.setState({addresses});
   };
 
@@ -363,6 +365,7 @@ export default class LoadedApp extends Component<LoadedAppProps, AppState> {
     try {
       // Construct a sendJson from the sendPage state
       const sendJson = this.getSendManyJSON();
+      console.log("Send many:", sendJson);
       const txid = await this.rpc.sendTransaction(sendJson, setSendProgress);
 
       return txid;
@@ -390,7 +393,7 @@ export default class LoadedApp extends Component<LoadedAppProps, AppState> {
 
   createNewAddress = async (zaddress: boolean) => {
     // Create a new address
-    const newaddress = await RPC.createNewAddress(zaddress);
+    const newaddress = await RPC.createNewAddress(AddressType.sapling);
     // console.log(`Created new Address ${newaddress}`);
 
     // And then fetch the list of addresses again to refresh (totalBalance gets all addresses)

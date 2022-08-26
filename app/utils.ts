@@ -22,6 +22,11 @@ export default class Utils {
     return new RegExp('^z[a-zA-Z0-9]{94}$').test(addr);
   }
 
+  static isUnified(addr: string): boolean {
+    if (!addr) return false;
+    return addr.startsWith('u');
+  }
+
   static isZaddr(addr: string): boolean {
     if (!addr) {
       return false;

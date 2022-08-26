@@ -8,6 +8,8 @@ import {
   WalletSeed,
   SendProgress,
   WalletSettings,
+  AddressType,
+  AddressDetail,
 } from './AppState';
 import RPCModule from '../components/RPCModule';
 import Utils from './utils';
@@ -17,7 +19,7 @@ export default class RPC {
   fnSetTotalBalance: (totalBalance: TotalBalance) => void;
   fnSetAddressesWithBalance: (addressBalances: AddressBalance[]) => void;
   fnSetTransactionsList: (txList: Transaction[]) => void;
-  fnSetAllAddresses: (allAddresses: string[]) => void;
+  fnSetAllAddresses: (allAddresses: AddressDetail[]) => void;
   fnSetZecPrice: (price: number | null) => void;
   fnRefreshUpdates: (inProgress: boolean, progress: number) => void;
   fnSetWalletSettings: (settings: WalletSettings) => void;
@@ -38,7 +40,7 @@ export default class RPC {
     fnSetTotalBalance: (totalBalance: TotalBalance) => void,
     fnSetAddressesWithBalance: (ab: AddressBalance[]) => void,
     fnSetTransactionsList: (txlist: Transaction[]) => void,
-    fnSetAllAddresses: (addresses: string[]) => void,
+    fnSetAllAddresses: (addresses: AddressDetail[]) => void,
     fnSetWalletSettings: (settings: WalletSettings) => void,
     fnSetInfo: (info: Info) => void,
     fnSetZecPrice: (price: number | null) => void,
@@ -244,10 +246,13 @@ export default class RPC {
     const download_memos_str = await RPCModule.execute('getoption', 'download_memos');
     const download_memos = JSON.parse(download_memos_str).download_memos;
 
-    // console.log(download_memos);
+    const spam_filter_str = await RPCModule.execute('getoption', 'spam_filter_threshold');
+    const spam_filter_threshold = JSON.parse(spam_filter_str).spam_filter_threshold;
+    console.log(`Spam filter threshold: ${spam_filter_threshold}`);
 
     const wallet_settings = new WalletSettings();
     wallet_settings.download_memos = download_memos;
+    wallet_settings.spam_filter_threshold = parseInt(spam_filter_threshold);
 
     this.fnSetWalletSettings(wallet_settings);
   }
@@ -311,17 +316,14 @@ export default class RPC {
     const balanceJSON = JSON.parse(balanceStr);
 
     //console.log(balanceJSON);
-
-    const privateBal = balanceJSON.zbalance / 10 ** 8;
-    const transparentBal = balanceJSON.tbalance / 10 ** 8;
-
-    // Total Balance
-    const balance: TotalBalance = {
-      privateBal,
-      transparentBal,
-      spendablePrivate: balanceJSON.spendable_zbalance / 10 ** 8,
-      total: privateBal + transparentBal,
-    };
+    const balance = new TotalBalance();
+    balance.uabalance = balanceJSON.uabalance / 10 ** 8;
+    balance.zbalance = balanceJSON.zbalance / 10 ** 8;
+    balance.transparent = balanceJSON.tbalance / 10 ** 8;
+    balance.verifiedZ = balanceJSON.verified_zbalance / 10 ** 8;
+    balance.unverifiedZ = balanceJSON.unverified_zbalance / 10 ** 8;
+    balance.spendableZ = balanceJSON.spendable_zbalance / 10 ** 8;
+    balance.total = balance.uabalance + balance.zbalance + balance.transparent;
     this.fnSetTotalBalance(balance);
 
     // Fetch pending notes and UTXOs
@@ -339,6 +341,17 @@ export default class RPC {
     pendingJSON.pending_utxos.forEach((s: any) => {
       pendingAddressBalances.set(s.address, s.value);
     });
+
+    const oaddresses = balanceJSON.ua_addresses
+      .map((o: any) => {
+        // If this has any unconfirmed txns, show that in the UI
+        const ab = new AddressBalance(o.address, o.balance / 10 ** 8);
+        if (pendingAddressBalances.has(ab.address)) {
+          ab.containsPending = true;
+        }
+        return ab;
+      })
+      .filter((ab: AddressBalance) => ab.balance > 0);
 
     // Addresses with Balance. The lite client reports balances in zatoshi, so divide by 10^8;
     const zaddresses = balanceJSON.z_addresses
@@ -363,14 +376,17 @@ export default class RPC {
       })
       .filter((ab: AddressBalance) => ab.balance > 0);
 
-    const addresses = zaddresses.concat(taddresses);
+    const addresses = oaddresses.concat(zaddresses.concat(taddresses));
 
     this.fnSetAddressesWithBalance(addresses);
 
     // Also set all addresses
-    const allZAddresses = balanceJSON.z_addresses.map((o: any) => o.address);
-    const allTAddresses = balanceJSON.t_addresses.map((o: any) => o.address);
-    const allAddresses = allZAddresses.concat(allTAddresses);
+    const allOAddresses = balanceJSON.ua_addresses.map((o: any) => new AddressDetail(o.address, AddressType.unified));
+    const allZAddresses = balanceJSON.z_addresses.map((o: any) => new AddressDetail(o.address, AddressType.sapling));
+    const allTAddresses = balanceJSON.t_addresses.map(
+      (o: any) => new AddressDetail(o.address, AddressType.transparent),
+    );
+    const allAddresses = allOAddresses.concat(allZAddresses.concat(allTAddresses));
 
     // console.log(`All addresses: ${allAddresses}`);
 
@@ -391,8 +407,9 @@ export default class RPC {
     return privKeyJSON[0].viewing_key;
   }
 
-  static async createNewAddress(zaddress: boolean): Promise<string> {
-    const addrStr = await RPCModule.execute('new', zaddress ? 'z' : 't');
+  static async createNewAddress(type: AddressType): Promise<string> {
+    const address_type = type === AddressType.unified ? 'u' : type === AddressType.sapling ? 'z' : 't';
+    const addrStr = await RPCModule.execute('new', address_type);
     const addrJSON = JSON.parse(addrStr);
 
     console.log(addrJSON);
