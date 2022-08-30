@@ -246,9 +246,14 @@ export default class RPC {
     const download_memos_str = await RPCModule.execute('getoption', 'download_memos');
     const download_memos = JSON.parse(download_memos_str).download_memos;
 
-    const spam_filter_str = await RPCModule.execute('getoption', 'spam_filter_threshold');
-    const spam_filter_threshold = JSON.parse(spam_filter_str).spam_filter_threshold;
-    console.log(`Spam filter threshold: ${spam_filter_threshold}`);
+    let spam_filter_threshold = '0';
+    try {
+      const spam_filter_str = await RPCModule.execute('getoption', 'spam_filter_threshold');
+      spam_filter_threshold = JSON.parse(spam_filter_str).spam_filter_threshold;
+      console.log(`Spam filter threshold: ${spam_filter_threshold}`);
+    } catch (e) {
+      console.log(`Error getting spam filter threshold: ${e}`);
+    }
 
     const wallet_settings = new WalletSettings();
     wallet_settings.download_memos = download_memos;

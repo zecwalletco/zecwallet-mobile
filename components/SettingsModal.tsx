@@ -1,10 +1,9 @@
 /* eslint-disable react-native/no-inline-styles */
 import React from 'react';
-import {View, ScrollView, SafeAreaView, Image, Text} from 'react-native';
+import {View, ScrollView, SafeAreaView, Image, Text, TouchableOpacity} from 'react-native';
 import {SecondaryButton, RegText, FadeText, BoldText} from './Components';
 import {useTheme} from '@react-navigation/native';
 import {WalletSettings} from '../app/AppState';
-import {TouchableOpacity} from 'react-native-gesture-handler';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {faDotCircle} from '@fortawesome/free-solid-svg-icons';
 import {faCircle as farCircle} from '@fortawesome/free-regular-svg-icons';
@@ -65,7 +64,9 @@ const SettingsModal: React.FunctionComponent<SettingsModalProps> = ({
           <View style={{display: 'flex', marginLeft: 20}}>
             <TouchableOpacity
               style={{marginRight: 10, marginBottom: 10}}
-              onPress={() => set_wallet_option('spam_filter_threshold', '50')}>
+              onPress={() => {
+                set_wallet_option('spam_filter_threshold', '50');
+              }}>
               <View style={{display: 'flex', flexDirection: 'row', marginTop: 20}}>
                 <FontAwesomeIcon icon={spam_allIcon} size={20} color={'#ffffff'} />
                 <RegText style={{marginLeft: 10}}>Filter out spammy transactions</RegText>

@@ -7,8 +7,8 @@ use std::sync::{Arc, Mutex};
 use base64::{decode, encode};
 
 use zecwalletlitelib::lightclient::lightclient_config::LightClientConfig;
-use zecwalletlitelib::{commands, lightclient::LightClient};
 use zecwalletlitelib::MainNetwork;
+use zecwalletlitelib::{commands, lightclient::LightClient};
 
 // We'll use a MUTEX to store a global lightclient instance,
 // so we don't have to keep creating it. We need to store it here, in rust
@@ -24,12 +24,13 @@ pub fn init_new(
     data_dir: String,
 ) -> String {
     let server = LightClientConfig::<MainNetwork>::get_server_or_default(Some(server_uri));
-    let (mut config, latest_block_height) = match LightClientConfig::create(MainNetwork, server) {
-        Ok((c, h)) => (c, h),
-        Err(e) => {
-            return format!("Error: {}", e);
-        }
-    };
+    let (mut config, latest_block_height) =
+        match LightClientConfig::create(MainNetwork, server, None) {
+            Ok((c, h)) => (c, h),
+            Err(e) => {
+                return format!("Error: {}", e);
+            }
+        };
 
     config.set_data_dir(data_dir);
 
@@ -72,12 +73,13 @@ pub fn init_from_seed(
     data_dir: String,
 ) -> String {
     let server = LightClientConfig::<MainNetwork>::get_server_or_default(Some(server_uri));
-    let (mut config, _latest_block_height) = match LightClientConfig::create(MainNetwork, server) {
-        Ok((c, h)) => (c, h),
-        Err(e) => {
-            return format!("Error: {}", e);
-        }
-    };
+    let (mut config, _latest_block_height) =
+        match LightClientConfig::create(MainNetwork, server, None) {
+            Ok((c, h)) => (c, h),
+            Err(e) => {
+                return format!("Error: {}", e);
+            }
+        };
 
     config.set_data_dir(data_dir);
 
@@ -119,12 +121,13 @@ pub fn init_from_b64(
     data_dir: String,
 ) -> String {
     let server = LightClientConfig::<MainNetwork>::get_server_or_default(Some(server_uri));
-    let (mut config, _latest_block_height) = match LightClientConfig::create(MainNetwork, server) {
-        Ok((c, h)) => (c, h),
-        Err(e) => {
-            return format!("Error: {}", e);
-        }
-    };
+    let (mut config, _latest_block_height) =
+        match LightClientConfig::create(MainNetwork, server, None) {
+            Ok((c, h)) => (c, h),
+            Err(e) => {
+                return format!("Error: {}", e);
+            }
+        };
 
     config.set_data_dir(data_dir);
 
