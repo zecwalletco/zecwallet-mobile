@@ -250,7 +250,14 @@ export default class RPC {
     try {
       const spam_filter_str = await RPCModule.execute('getoption', 'spam_filter_threshold');
       spam_filter_threshold = JSON.parse(spam_filter_str).spam_filter_threshold;
+      
       console.log(`Spam filter threshold: ${spam_filter_threshold}`);
+      // If the spam threshold is -1, then set it to 50
+      if (spam_filter_threshold === '-1') {
+          RPC.setWalletSettingOption('spam_filter_threshold', '50');
+          spam_filter_threshold = '50';
+      }
+
     } catch (e) {
       console.log(`Error getting spam filter threshold: ${e}`);
     }
